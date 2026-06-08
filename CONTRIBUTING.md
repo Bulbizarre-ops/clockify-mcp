@@ -57,13 +57,24 @@ Then tag and push:
 git tag vX.Y.Z && git push --tags
 ```
 
-Pushing a `v*` tag triggers the **Release** workflow, which builds the sdist +
-wheel, verifies the tag matches `pyproject.toml`, publishes to PyPI via Trusted
-Publishing (OIDC — no token), creates a GitHub release with the artifacts, and
-publishes the manifest to the official **MCP Registry**. The registry step stamps
-`server.json` with the tag version automatically, so it can never lag the package
-(no token needed — it authenticates via GitHub OIDC against the `io.github.tracegazer`
-namespace, which matches the repo owner).
+Pushing a `v*` tag triggers the **Release** workflow, which:
+
+1. Builds the sdist + wheel and verifies the tag matches `pyproject.toml`.
+2. Publishes to PyPI via Trusted Publishing (OIDC — no token).
+3. Builds and pushes a multi-arch Docker image to
+   `ghcr.io/tracegazer/clockify-mcp` (`:X.Y.Z`, `:X.Y`, `:latest`).
+4. Creates a GitHub release with the artifacts.
+5. Publishes the manifest to the official **MCP Registry**.
+
+The registry step stamps `server.json` with the tag version automatically — both
+the top-level `version` and the PyPI/OCI package versions (including the image
+`:tag`) — so the registry can never lag the released package. It authenticates via
+GitHub OIDC against the `io.github.tracegazer` namespace (matches the repo owner),
+so no token is needed.
+
+The Docker image must carry the `io.modelcontextprotocol.server.name` label
+(set in the `Dockerfile`) — it is the registry's ownership proof for the OCI
+package, and must match `name` in `server.json`.
 
 > One-time setup on PyPI: register a Trusted Publisher for this project
 > (PyPI → project → Publishing) pointing at owner `tracegazer`, repo

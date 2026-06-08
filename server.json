@@ -38,6 +38,32 @@
           "isRequired": false
         }
       ]
+    },
+    {
+      "registryType": "oci",
+      "identifier": "ghcr.io/tracegazer/clockify-mcp:0.2.2",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "CLOCKIFY_API_KEY",
+          "description": "Clockify API key (Profile Settings -> API).",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "CLOCKIFY_ACCESS_MODE",
+          "description": "Write access mode: read (default, read-only) | time-tracking (time-entry writes only) | full (all writes)",
+          "isRequired": false,
+          "default": "read"
+        },
+        {
+          "name": "CLOCKIFY_DEFAULT_WORKSPACE_ID",
+          "description": "Default workspace id used when a tool call omits workspace_id.",
+          "isRequired": false
+        }
+      ]
     }
   ]
 }

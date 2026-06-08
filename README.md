@@ -73,6 +73,12 @@ Or run without installing (requires [uv](https://docs.astral.sh/uv/)):
 uvx clockify-mcp
 ```
 
+Or use the container image (published to GHCR on every release):
+
+```bash
+docker run --rm -i -e CLOCKIFY_API_KEY=your-key ghcr.io/tracegazer/clockify-mcp:latest
+```
+
 ### 2. Connect to Claude Desktop
 
 Add this to your `claude_desktop_config.json`:

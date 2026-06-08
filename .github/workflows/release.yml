@@ -64,8 +64,44 @@ jobs:
           files: dist/*
           generate_release_notes: true
 
+  docker-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write  # push to ghcr.io
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/tracegazer/clockify-mcp
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: false
+
   mcp-registry-publish:
-    needs: pypi-publish  # the registry validates the package on PyPI, so publish there first
+    needs: [pypi-publish, docker-publish]  # the registry validates both packages exist before accepting
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # OIDC for MCP Registry auth (io.github.* namespace) — no token
@@ -77,13 +113,17 @@ jobs:
         run: |
           VERSION="${TAG#v}"
           python3 - "$VERSION" <<'PY'
-          import json, sys
+          import json, re, sys
           version = sys.argv[1]
           with open("server.json") as fh:
               data = json.load(fh)
           data["version"] = version
           for pkg in data.get("packages", []):
-              pkg["version"] = version
+              if "version" in pkg:
+                  pkg["version"] = version
+              if pkg.get("registryType") == "oci":
+                  # rewrite the :tag on the OCI image reference
+                  pkg["identifier"] = re.sub(r":[^:/]+$", ":" + version, pkg["identifier"])
           with open("server.json", "w") as fh:
               json.dump(data, fh, indent=2)
               fh.write("\n")

@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Release workflow also publishes the manifest to the official MCP Registry
   (GitHub OIDC, no token), stamping `server.json` with the tag version so the
   registry never lags the released package.
+- Multi-arch Docker image (`linux/amd64`, `linux/arm64`) published to
+  `ghcr.io/tracegazer/clockify-mcp` on every release, and exposed as an `oci`
+  package in `server.json` so container users are discoverable via the registry.
 - Dependabot configuration for Python deps and GitHub Actions.
 - `SECURITY.md`, `CONTRIBUTING.md`, issue/PR templates.
 
