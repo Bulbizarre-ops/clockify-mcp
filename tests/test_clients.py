@@ -34,6 +34,32 @@ async def test_list_clients_passes_filters(config):
 
 
 @respx.mock
+async def test_list_clients_fetch_all_follows_pagination(config):
+    # Two full pages then a short page -> fetch_all concatenates all and stops.
+    pages = [
+        [{"id": "c1"}, {"id": "c2"}],
+        [{"id": "c3"}, {"id": "c4"}],
+        [{"id": "c5"}],
+    ]
+
+    def responder(request):
+        page = int(request.url.params["page"])
+        return httpx.Response(200, json=pages[page - 1])
+
+    route = respx.get("https://api.clockify.me/api/v1/workspaces/ws1/clients").mock(
+        side_effect=responder
+    )
+    client = ClockifyClient(config)
+    result = await clients.list_clients(client, name="acme", fetch_all=True, page_size=2)
+    assert [c["id"] for c in result] == ["c1", "c2", "c3", "c4", "c5"]
+    assert route.call_count == 3
+    # filters are preserved on every paged request
+    assert route.calls.last.request.url.params["name"] == "acme"
+    assert route.calls.last.request.url.params["page-size"] == "2"
+    await client.aclose()
+
+
+@respx.mock
 async def test_get_client(config):
     respx.get("https://api.clockify.me/api/v1/workspaces/ws1/clients/c1").mock(
         return_value=httpx.Response(200, json={"id": "c1", "name": "Acme"})

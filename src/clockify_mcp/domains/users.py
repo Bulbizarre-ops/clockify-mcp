@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from ..client import ClockifyClient
-from ..pagination import page_params
+from ..pagination import fetch_all_pages, page_params
 from .workspaces import resolve_workspace_id
 
 if TYPE_CHECKING:
@@ -21,15 +21,23 @@ async def list_users(
     status: str | None = None,
     page: int | None = None,
     page_size: int | None = None,
+    fetch_all: bool = False,
 ) -> Any:
     """List workspace users, optionally filtered by name/email/status (paginated).
 
     ``status`` is one of ACTIVE, INACTIVE, PENDING, DECLINED, etc. Use page /
-    page_size for large workspaces.
+    page_size for large workspaces. Set fetch_all=True to follow pagination and
+    return every page concatenated (ignores page; may make several API calls).
     """
     ws = resolve_workspace_id(client, workspace_id)
-    params = {"name": name, "email": email, "status": status, **page_params(page, page_size)}
-    return await client.get(f"workspaces/{ws}/users", params=params)
+    base = {"name": name, "email": email, "status": status}
+    path = f"workspaces/{ws}/users"
+    if fetch_all:
+        return await fetch_all_pages(
+            lambda p, ps: client.get(path, params={**base, **page_params(p, ps)}),
+            page_size=page_size,
+        )
+    return await client.get(path, params={**base, **page_params(page, page_size)})
 
 
 async def get_user_member_profile(
@@ -57,8 +65,10 @@ def register(mcp: "FastMCP", client: ClockifyClient) -> None:
         status: str | None = None,
         page: int | None = None,
         page_size: int | None = None,
+        fetch_all: bool = False,
     ) -> Any:
-        """List workspace users, optionally filtered by name/email/status (paginated)."""
+        """List workspace users, optionally filtered by name/email/status (paginated).
+        fetch_all=True follows pagination and returns every page concatenated."""
         return await list_users_fn(
             client,
             workspace_id=workspace_id,
@@ -67,6 +77,7 @@ def register(mcp: "FastMCP", client: ClockifyClient) -> None:
             status=status,
             page=page,
             page_size=page_size,
+            fetch_all=fetch_all,
         )
 
     @mcp.tool()

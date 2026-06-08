@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from ..bodies import drop_none
 from ..client import ClockifyClient
-from ..pagination import page_params
+from ..pagination import fetch_all_pages, page_params
 from .workspaces import resolve_workspace_id
 
 if TYPE_CHECKING:
@@ -31,6 +31,7 @@ async def list_time_entries(
     get_week_before: str | None = None,
     page: int | None = None,
     page_size: int | None = None,
+    fetch_all: bool = False,
 ) -> Any:
     """List a user's time entries on the workspace (paginated).
 
@@ -38,10 +39,12 @@ async def list_time_entries(
     ISO-8601 datetimes with offset (e.g. 2021-01-01T00:00:00Z). project/task filter
     by a single id; tags is a list of tag ids. hydrated=True expands project/task/tag
     objects; in_progress=True returns only the running entry. get_week_before is an
-    ISO-8601 datetime that returns the entries of the week before it.
+    ISO-8601 datetime that returns the entries of the week before it. Set fetch_all=True
+    to follow pagination and return every page concatenated (ignores page; may make
+    several API calls).
     """
     ws = resolve_workspace_id(client, workspace_id)
-    params = {
+    base = {
         "description": description,
         "start": start,
         "end": end,
@@ -53,9 +56,14 @@ async def list_time_entries(
         "hydrated": hydrated,
         "in-progress": in_progress,
         "get-week-before": get_week_before,
-        **page_params(page, page_size),
     }
-    return await client.get(f"workspaces/{ws}/user/{user_id}/time-entries", params=params)
+    path = f"workspaces/{ws}/user/{user_id}/time-entries"
+    if fetch_all:
+        return await fetch_all_pages(
+            lambda p, ps: client.get(path, params={**base, **page_params(p, ps)}),
+            page_size=page_size,
+        )
+    return await client.get(path, params={**base, **page_params(page, page_size)})
 
 
 async def get_time_entry(
@@ -236,8 +244,10 @@ def register(mcp: "FastMCP", client: ClockifyClient) -> None:
         get_week_before: str | None = None,
         page: int | None = None,
         page_size: int | None = None,
+        fetch_all: bool = False,
     ) -> Any:
-        """List a user's time entries on the workspace (paginated)."""
+        """List a user's time entries on the workspace (paginated).
+        fetch_all=True follows pagination and returns every page concatenated."""
         return await list_time_entries_fn(
             client,
             user_id=user_id,
@@ -255,6 +265,7 @@ def register(mcp: "FastMCP", client: ClockifyClient) -> None:
             get_week_before=get_week_before,
             page=page,
             page_size=page_size,
+            fetch_all=fetch_all,
         )
 
     @mcp.tool()
