@@ -516,6 +516,21 @@ async def test_live_attendance_and_expense_reports(live):
     assert "expenses" in exp
 
 
+def _report_dicts(resp) -> list:
+    """Collect report dicts from an untyped shared-reports list response. The list lives
+    under an unspecified key (the response shape is `*/*` in the OpenAPI), so gather dicts
+    from every list-valued field rather than guessing the key name."""
+    if isinstance(resp, list):
+        return [r for r in resp if isinstance(r, dict)]
+    if isinstance(resp, dict):
+        out = []
+        for value in resp.values():
+            if isinstance(value, list):
+                out.extend(r for r in value if isinstance(r, dict))
+        return out
+    return []
+
+
 async def test_live_shared_report_roundtrip(live):
     """Phase 8b: shared-report CRUD (reports host). Create -> get-by-id -> update -> delete.
     Skip if the plan doesn't allow shared reports."""
@@ -536,8 +551,11 @@ async def test_live_shared_report_roundtrip(live):
             client, workspace_id=ws, shared_report_id=sr_id, name=PREFIX + "shared2",
         )
         listed = await shared_reports.list_shared_reports(client, workspace_id=ws)
-        reports_list = listed.get("sharedReports", listed) if isinstance(listed, dict) else listed
-        assert any(r.get("id") == sr_id for r in reports_list)
+        assert listed is not None
+        assert any(r.get("id") == sr_id for r in _report_dicts(listed)), (
+            "created shared report not found in list response; "
+            f"keys={list(listed) if isinstance(listed, dict) else type(listed).__name__}"
+        )
     finally:
         await shared_reports.delete_shared_report(client, workspace_id=ws, shared_report_id=sr_id)
 
