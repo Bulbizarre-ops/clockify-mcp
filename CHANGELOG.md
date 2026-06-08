@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   package in `server.json` so container users are discoverable via the registry.
 - Release workflow publishes the `.mcpb` bundle to Smithery on each tag
   (gated on a `SMITHERY_API_KEY` secret; skipped with a warning if unset).
+- The `.mcpb` bundle is built once in CI and attached as an asset to every
+  GitHub Release (same artifact used for Smithery), enabling one-click install
+  into Claude Desktop. Documented prominently near the top of the README.
 - Dependabot configuration for Python deps and GitHub Actions.
 - `SECURITY.md`, `CONTRIBUTING.md`, issue/PR templates.
 

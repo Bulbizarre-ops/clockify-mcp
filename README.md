@@ -8,6 +8,14 @@ Give your AI assistant access to your Clockify data — query workspaces, projec
 
 **117 tools** across 18 domains. Read-only by default, with optional write operations behind explicit opt-in.
 
+## Install in one click
+
+The easiest way to use this server with **Claude Desktop** (and other MCPB-compatible clients) is the prebuilt bundle:
+
+**➡️ [Download `clockify-mcp.mcpb`](https://github.com/tracegazer/clockify-mcp/releases/latest/download/clockify-mcp.mcpb)** — then double-click it. Claude Desktop opens the installer, prompts for your Clockify API key, and you're done. No Python, no `npx`/`uvx`, no config files.
+
+The `.mcpb` is attached to every [GitHub Release](https://github.com/tracegazer/clockify-mcp/releases) and mirrored on [Smithery](https://smithery.ai/). Prefer a package manager or container? See [Quick start](#quick-start) below.
+
 ## What can it do?
 
 **48 read-only tools** are available today (Phase 0–8b — 18 domains). 64 write tools (create/update/delete across clients, projects, tasks, tags, time entries, holidays, expenses, and expense categories, plus time-off policy/request management, approval submit/resubmit/update, custom-field create/update/delete and project assignment, scheduling assignment management, invoice and payment management, shared-report management, and webhook create/update/delete/token) register when you set `CLOCKIFY_ACCESS_MODE=full` (or the back-compat `CLOCKIFY_ENABLE_WRITES=true`). A middle `time-tracking` mode exposes only the time-entry writes for logging hours — see [Access modes](#configuration).

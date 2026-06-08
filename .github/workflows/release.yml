@@ -31,6 +31,16 @@ jobs:
         with:
           name: dist
           path: dist/
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Build MCPB bundle
+        run: bash scripts/build-mcpb.sh
+      - name: Upload MCPB bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcpb
+          path: clockify-mcp.mcpb
 
   pypi-publish:
     needs: build
@@ -58,10 +68,16 @@ jobs:
         with:
           name: dist
           path: dist/
+      - name: Download MCPB bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: mcpb
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*
+          files: |
+            dist/*
+            clockify-mcp.mcpb
           generate_release_notes: true
 
   docker-publish:
@@ -145,17 +161,17 @@ jobs:
         run: ./mcp-publisher publish
 
   smithery-publish:
-    needs: pypi-publish  # the .mcpb points at `uvx clockify-mcp`, so PyPI must be live first
+    needs: [build, pypi-publish]  # reuse the build job's bundle; PyPI live first (.mcpb runs `uvx clockify-mcp`)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - uses: actions/setup-python@v5
+      - name: Download MCPB bundle
+        uses: actions/download-artifact@v4
         with:
-          python-version: "3.12"
-      - name: Build MCPB bundle and publish to Smithery
+          name: mcpb
+      - name: Publish to Smithery
         env:
           SMITHERY_API_KEY: ${{ secrets.SMITHERY_API_KEY }}
         run: |
@@ -163,5 +179,4 @@ jobs:
             echo "::warning::SMITHERY_API_KEY secret not set — skipping Smithery publish"
             exit 0
           fi
-          bash scripts/build-mcpb.sh
           npx -y smithery@latest mcp publish ./clockify-mcp.mcpb -n tracegazer/clockify-mcp
