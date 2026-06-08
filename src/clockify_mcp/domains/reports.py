@@ -206,7 +206,7 @@ async def export_report(
     return {"path": str(path), "bytes": len(data), "format": fmt}
 
 
-def register(mcp: "FastMCP", client: ClockifyClient) -> None:
+def register(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def generate_detailed_report(
         date_range_start: str,

@@ -1,4 +1,4 @@
-from clockify_mcp.pagination import fetch_all_pages, page_params, is_last_page
+from clockify_mcp.pagination import fetch_all_pages, is_last_page, page_params
 
 
 def test_page_params_drops_none():

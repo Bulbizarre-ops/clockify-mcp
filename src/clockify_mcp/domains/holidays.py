@@ -127,7 +127,7 @@ async def delete_holiday(
     return await client.delete(f"workspaces/{ws}/holidays/{holiday_id}")
 
 
-def register(mcp: "FastMCP", client: ClockifyClient) -> None:
+def register(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def list_holidays(
         workspace_id: str | None = None, assigned_to: str | None = None
@@ -150,7 +150,7 @@ def register(mcp: "FastMCP", client: ClockifyClient) -> None:
         _register_writes(mcp, client)
 
 
-def _register_writes(mcp: "FastMCP", client: ClockifyClient) -> None:
+def _register_writes(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def create_holiday(
         name: str,

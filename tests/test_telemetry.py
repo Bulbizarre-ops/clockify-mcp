@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import InMemoryMetricReader
@@ -6,7 +8,6 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
-from pathlib import Path
 
 from clockify_mcp._otel import OTelTelemetry
 from clockify_mcp.config import Config
@@ -85,9 +86,8 @@ def test_tool_span_has_genai_attributes(otel):
 
 def test_tool_span_records_error_and_reraises(otel):
     telemetry, exporter, _ = otel
-    with pytest.raises(ValueError):
-        with telemetry.tool_span("bad_tool", {}):
-            raise ValueError("boom")
+    with pytest.raises(ValueError), telemetry.tool_span("bad_tool", {}):
+        raise ValueError("boom")
     span = exporter.get_finished_spans()[0]
     assert span.status.status_code.name == "ERROR"
     assert any(e.name == "exception" for e in span.events)
@@ -123,8 +123,11 @@ def _otel_with_detail(detail, token="SECRET-TOKEN"):
     tracer_provider.add_span_processor(SimpleSpanProcessor(exporter))
     meter_provider = MeterProvider(metric_readers=[InMemoryMetricReader()])
     telemetry = OTelTelemetry.for_testing(
-        Config.load({**BASE, "CLOCKIFY_API_KEY": token, "CLOCKIFY_TELEMETRY": "1",
-                     "CLOCKIFY_TELEMETRY_DETAIL": detail}, config_path=Path("/does/not/exist.toml")),
+        Config.load(
+            {**BASE, "CLOCKIFY_API_KEY": token, "CLOCKIFY_TELEMETRY": "1",
+             "CLOCKIFY_TELEMETRY_DETAIL": detail},
+            config_path=Path("/does/not/exist.toml"),
+        ),
         tracer_provider=tracer_provider,
         meter_provider=meter_provider,
     )
@@ -180,7 +183,7 @@ def test_resource_has_default_service_name(monkeypatch):
 
 
 def test_shutdown_calls_meter_provider(otel):
-    telemetry, _, reader = otel
+    telemetry, _, _reader = otel
     # Should not raise; meter provider shutdown must be called
     telemetry.shutdown()
 
@@ -215,9 +218,8 @@ def test_client_span_size_redacts_token():
 
 def test_tool_error_sets_error_type_and_counter(otel):
     telemetry, exporter, reader = otel
-    with pytest.raises(ValueError):
-        with telemetry.tool_span("bad_tool", {}):
-            raise ValueError("boom")
+    with pytest.raises(ValueError), telemetry.tool_span("bad_tool", {}):
+        raise ValueError("boom")
     span = exporter.get_finished_spans()[0]
     assert span.attributes["error.type"] == "ValueError"
     names = {m.name for rm in reader.get_metrics_data().resource_metrics
@@ -227,6 +229,7 @@ def test_tool_error_sets_error_type_and_counter(otel):
 
 def test_logger_provider_configured_with_non_propagating_handler():
     import logging
+
     from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
     from opentelemetry.sdk._logs.export import InMemoryLogRecordExporter, SimpleLogRecordProcessor
     exporter = InMemoryLogRecordExporter()

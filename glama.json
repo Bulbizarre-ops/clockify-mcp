@@ -1,5 +1,6 @@
 {
   "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "description": "Full-coverage Clockify MCP server — 117 tools across 18 domains (incl. invoices, scheduling, time-off & approvals), native OpenTelemetry observability, and a 3-tier read/time-tracking/full access model.",
   "maintainers": [
     "tracegazer"
   ]

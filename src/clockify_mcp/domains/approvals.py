@@ -116,7 +116,7 @@ async def update_approval_request(
     )
 
 
-def register(mcp: "FastMCP", client: ClockifyClient) -> None:
+def register(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def list_approval_requests(
         workspace_id: str | None = None,
@@ -141,7 +141,7 @@ def register(mcp: "FastMCP", client: ClockifyClient) -> None:
         _register_writes(mcp, client)
 
 
-def _register_writes(mcp: "FastMCP", client: ClockifyClient) -> None:
+def _register_writes(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def submit_approval_request(
         period_start: str, period: str, workspace_id: str | None = None

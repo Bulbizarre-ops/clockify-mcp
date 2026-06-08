@@ -268,7 +268,7 @@ async def withdraw_time_off_request(
     )
 
 
-def register(mcp: "FastMCP", client: ClockifyClient) -> None:
+def register(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def list_time_off_policies(
         workspace_id: str | None = None,
@@ -368,7 +368,7 @@ def register(mcp: "FastMCP", client: ClockifyClient) -> None:
         _register_writes(mcp, client)
 
 
-def _register_writes(mcp: "FastMCP", client: ClockifyClient) -> None:
+def _register_writes(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def create_time_off_policy(
         name: str,

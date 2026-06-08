@@ -7,10 +7,10 @@ the server INSTRUCTIONS.
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 
-class ErrorCategory(str, Enum):
+class ErrorCategory(StrEnum):
     AUTH = "AUTH"
     PLAN_REQUIRED = "PLAN_REQUIRED"
     ACCESS_DENIED = "ACCESS_DENIED"
@@ -45,9 +45,7 @@ def classify_error(
     empty rather than crashing the error path.
     """
     lowered = (message if isinstance(message, str) else "").lower()
-    if "suscrip" in lowered or "subscription" in lowered:
-        category = ErrorCategory.PLAN_REQUIRED
-    elif status_code == 402:
+    if "suscrip" in lowered or "subscription" in lowered or status_code == 402:
         category = ErrorCategory.PLAN_REQUIRED
     elif status_code == 401:
         category = ErrorCategory.AUTH

@@ -1,7 +1,9 @@
 # tests/test_scheduling.py
 import json
+
 import httpx
 import respx
+
 from clockify_mcp.client import ClockifyClient
 from clockify_mcp.domains import scheduling
 
@@ -129,7 +131,11 @@ async def test_publish_assignments(config_writes):
         client, start="2026-06-01T00:00:00Z", end="2026-06-30T00:00:00Z", notify_users=True,
     )
     body = json.loads(route.calls.last.request.content)
-    assert body == {"start": "2026-06-01T00:00:00Z", "end": "2026-06-30T00:00:00Z", "notifyUsers": True}
+    assert body == {
+        "start": "2026-06-01T00:00:00Z",
+        "end": "2026-06-30T00:00:00Z",
+        "notifyUsers": True,
+    }
     await client.aclose()
 
 

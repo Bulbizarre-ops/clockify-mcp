@@ -26,7 +26,7 @@ async def list_user_groups(
     return await client.get(f"workspaces/{ws}/user-groups", params=params)
 
 
-def register(mcp: "FastMCP", client: ClockifyClient) -> None:
+def register(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def list_user_groups(
         workspace_id: str | None = None,

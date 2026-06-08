@@ -166,7 +166,7 @@ async def delete_shared_report(
     return await client.report_delete(f"workspaces/{ws}/shared-reports/{shared_report_id}")
 
 
-def register(mcp: "FastMCP", client: ClockifyClient) -> None:
+def register(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def list_shared_reports(
         workspace_id: str | None = None,
@@ -213,7 +213,7 @@ def register(mcp: "FastMCP", client: ClockifyClient) -> None:
         _register_writes(mcp, client)
 
 
-def _register_writes(mcp: "FastMCP", client: ClockifyClient) -> None:
+def _register_writes(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def create_shared_report(
         name: str,

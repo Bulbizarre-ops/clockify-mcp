@@ -14,7 +14,6 @@ from typing import Literal
 
 from .client import ClockifyClient
 from .config import Config
-from .telemetry import InstrumentedFastMCP, Telemetry, build_telemetry
 from .domains import (
     approvals,
     clients,
@@ -35,6 +34,7 @@ from .domains import (
     webhooks,
     workspaces,
 )
+from .telemetry import InstrumentedFastMCP, Telemetry, build_telemetry
 
 INSTRUCTIONS = """\
 Tools for the Clockify time-tracking API. Read-only by default; write tools are \

@@ -107,7 +107,7 @@ async def delete_client(
     return await client.delete(f"workspaces/{ws}/clients/{client_id}")
 
 
-def register(mcp: "FastMCP", client: ClockifyClient) -> None:
+def register(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def list_clients(
         workspace_id: str | None = None,
@@ -142,7 +142,7 @@ def register(mcp: "FastMCP", client: ClockifyClient) -> None:
         _register_writes(mcp, client)
 
 
-def _register_writes(mcp: "FastMCP", client: ClockifyClient) -> None:
+def _register_writes(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def create_client(
         name: str,

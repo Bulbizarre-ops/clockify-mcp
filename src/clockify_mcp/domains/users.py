@@ -56,7 +56,7 @@ async def find_user_team_manager(
     return await client.get(f"workspaces/{ws}/users/{user_id}/managers")
 
 
-def register(mcp: "FastMCP", client: ClockifyClient) -> None:
+def register(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def list_users(
         workspace_id: str | None = None,

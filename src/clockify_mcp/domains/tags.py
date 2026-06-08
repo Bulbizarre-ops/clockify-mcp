@@ -91,7 +91,7 @@ async def delete_tag(
     return await client.delete(f"workspaces/{ws}/tags/{tag_id}")
 
 
-def register(mcp: "FastMCP", client: ClockifyClient) -> None:
+def register(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def list_tags(
         workspace_id: str | None = None,
@@ -130,7 +130,7 @@ def register(mcp: "FastMCP", client: ClockifyClient) -> None:
         _register_writes(mcp, client)
 
 
-def _register_writes(mcp: "FastMCP", client: ClockifyClient) -> None:
+def _register_writes(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def create_tag(name: str, workspace_id: str | None = None) -> Any:
         """Create a tag on the workspace."""

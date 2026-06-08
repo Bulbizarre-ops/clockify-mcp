@@ -45,7 +45,7 @@ class Config:
         return self.access_mode == "full"
 
     @classmethod
-    def load(cls, env: Mapping[str, str], config_path: Path = DEFAULT_CONFIG_PATH) -> "Config":
+    def load(cls, env: Mapping[str, str], config_path: Path = DEFAULT_CONFIG_PATH) -> Config:
         file_values = _read_toml(config_path)
 
         api_key = env.get("CLOCKIFY_API_KEY") or file_values.get("api_key")
@@ -77,7 +77,9 @@ class Config:
             env, file_values, "CLOCKIFY_TELEMETRY", "telemetry_enabled"
         )
         telemetry_detail = (
-            env.get("CLOCKIFY_TELEMETRY_DETAIL") or file_values.get("telemetry_detail") or "metadata"
+            env.get("CLOCKIFY_TELEMETRY_DETAIL")
+            or file_values.get("telemetry_detail")
+            or "metadata"
         )
         if telemetry_detail not in _TELEMETRY_DETAILS:
             telemetry_detail = "metadata"

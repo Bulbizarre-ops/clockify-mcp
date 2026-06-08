@@ -18,7 +18,6 @@ import pytest
 
 from clockify_mcp.client import ClockifyAPIError, ClockifyClient
 from clockify_mcp.config import Config
-from clockify_mcp.server import build_server
 from clockify_mcp.domains import (
     approvals,
     clients,
@@ -37,6 +36,7 @@ from clockify_mcp.domains import (
     webhooks,
     workspaces,
 )
+from clockify_mcp.server import build_server
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("CLOCKIFY_LIVE_TEST"),
@@ -110,7 +110,9 @@ async def live():
     if wanted:
         all_ws = await workspaces.list_workspaces(client)
         match = [w for w in all_ws if w.get("name") == wanted]
-        assert match, f"workspace named {wanted!r} not found; have {[w.get('name') for w in all_ws]}"
+        assert match, (
+            f"workspace named {wanted!r} not found; have {[w.get('name') for w in all_ws]}"
+        )
         ws_id = match[0]["id"]
     assert ws_id, "could not resolve a workspace id"
     await _purge_smoke_artifacts(client, ws_id)
@@ -399,7 +401,8 @@ async def test_live_invoice_roundtrip(live):
         except ClockifyAPIError as exc:
             _skip_if_feature_unavailable(exc)  # always raises
         inv_id = inv["id"]
-        assert (await invoices.get_invoice(client, workspace_id=ws, invoice_id=inv_id))["id"] == inv_id
+        fetched = await invoices.get_invoice(client, workspace_id=ws, invoice_id=inv_id)
+        assert fetched["id"] == inv_id
         await invoices.add_invoice_item(
             client, workspace_id=ws, invoice_id=inv_id, apply_taxes="NONE",
             description=PREFIX + "item", item_type="Service", quantity=1, unit_price=100,

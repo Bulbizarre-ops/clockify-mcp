@@ -128,7 +128,7 @@ async def delete_task(
     return await client.delete(f"workspaces/{ws}/projects/{project_id}/tasks/{task_id}")
 
 
-def register(mcp: "FastMCP", client: ClockifyClient) -> None:
+def register(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def list_tasks(
         project_id: str,
@@ -171,7 +171,7 @@ def register(mcp: "FastMCP", client: ClockifyClient) -> None:
         _register_writes(mcp, client)
 
 
-def _register_writes(mcp: "FastMCP", client: ClockifyClient) -> None:
+def _register_writes(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def create_task(
         project_id: str,

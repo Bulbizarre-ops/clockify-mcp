@@ -37,7 +37,7 @@ async def get_workspace(client: ClockifyClient, workspace_id: str | None = None)
     return await client.get(f"workspaces/{ws}")
 
 
-def register(mcp: "FastMCP", client: ClockifyClient) -> None:
+def register(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def get_current_user() -> Any:
         """Get the currently logged-in user's info (id, email, default workspace)."""

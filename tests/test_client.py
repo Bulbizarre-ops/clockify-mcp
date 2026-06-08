@@ -4,7 +4,7 @@ import httpx
 import pytest
 import respx
 
-from clockify_mcp.client import ClockifyClient, ClockifyAPIError
+from clockify_mcp.client import ClockifyAPIError, ClockifyClient
 from clockify_mcp.config import Config
 from clockify_mcp.errors import ErrorCategory
 
@@ -194,11 +194,15 @@ async def test_post_passes_query_params(config):
 
 
 async def test_access_mode_client_flags():
-    tt = ClockifyClient(Config.load(env={"CLOCKIFY_API_KEY": "k", "CLOCKIFY_ACCESS_MODE": "time-tracking"}))
+    tt = ClockifyClient(
+        Config.load(env={"CLOCKIFY_API_KEY": "k", "CLOCKIFY_ACCESS_MODE": "time-tracking"})
+    )
     assert tt.time_tracking_enabled is True
     assert tt.writes_enabled is False
     await tt.aclose()
-    full = ClockifyClient(Config.load(env={"CLOCKIFY_API_KEY": "k", "CLOCKIFY_ACCESS_MODE": "full"}))
+    full = ClockifyClient(
+        Config.load(env={"CLOCKIFY_API_KEY": "k", "CLOCKIFY_ACCESS_MODE": "full"})
+    )
     assert full.time_tracking_enabled is True
     assert full.writes_enabled is True
     await full.aclose()

@@ -5,14 +5,14 @@ build-backend = "hatchling.build"
 [project]
 name = "clockify-mcp"
 version = "0.2.2"
-description = "MCP server for the Clockify time-tracking API — exposes Clockify operations as Model Context Protocol tools."
+description = "Full-coverage Clockify MCP server — 117 tools across 18 domains (incl. invoices, scheduling, time-off & approvals), native OpenTelemetry observability, and a 3-tier read/time-tracking/full access model."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "Alan (tracegazer)" }]
 keywords = ["mcp", "clockify", "time-tracking", "model-context-protocol"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.12",
@@ -48,6 +48,9 @@ Issues = "https://github.com/tracegazer/clockify-mcp/issues"
 [tool.hatch.build.targets.wheel]
 packages = ["src/clockify_mcp"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"src/clockify_mcp/py.typed" = "clockify_mcp/py.typed"
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
@@ -56,3 +59,6 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]

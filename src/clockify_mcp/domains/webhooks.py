@@ -129,7 +129,7 @@ async def generate_webhook_token(
     return await client.patch(f"workspaces/{ws}/webhooks/{webhook_id}/token")
 
 
-def register(mcp: "FastMCP", client: ClockifyClient) -> None:
+def register(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def list_webhooks(
         workspace_id: str | None = None,
@@ -177,7 +177,7 @@ def register(mcp: "FastMCP", client: ClockifyClient) -> None:
         _register_writes(mcp, client)
 
 
-def _register_writes(mcp: "FastMCP", client: ClockifyClient) -> None:
+def _register_writes(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def create_webhook(
         url: str,

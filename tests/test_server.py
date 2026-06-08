@@ -1,4 +1,4 @@
-from clockify_mcp.telemetry import Telemetry, build_telemetry, InstrumentedFastMCP
+from clockify_mcp.telemetry import InstrumentedFastMCP, Telemetry, build_telemetry
 
 
 def test_telemetry_client_span_is_context_manager():

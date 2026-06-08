@@ -4,7 +4,7 @@
 
 `clockify-mcp` is an MCP server for the [Clockify](https://clockify.me) time-tracking API. It exposes Clockify workspaces, users, groups, clients, projects, tasks, and tags as Model Context Protocol tools so any MCP-compatible client (Claude Desktop, Cursor, etc.) can query time-tracking data in natural language.
 
-Current phase: **Phase 0–8b (v1 complete + extensions)** — ~49 read tools + ~62 opt-in write tools across 18 domains (Workspaces, Users, Groups, Clients, Projects, Tasks, Tags, Time entries, Reports, Shared reports, Time off, Holidays, Expenses, Approvals, Custom fields, Scheduling, Invoices, Webhooks). Writes (create/update/delete for clients/projects/tasks/tags/time_entries/holidays, plus time-entry duplicate/bulk, time-off policy/request create/approve/reject/withdraw, expense + expense-category create/update/delete/archive, approval submit/resubmit/update, custom-field create/update/delete and project set/remove, scheduling assignment create/update/delete/publish/copy, invoice create/update/change-status/duplicate/delete and item/payment management, and webhook create/update/delete/generate-token) register according to CLOCKIFY_ACCESS_MODE: `read` (default, none), `time-tracking` (only time-entry writes — duplicate/bulk self-scoped to the authenticated user), or `full` (all writes; CLOCKIFY_ENABLE_WRITES=true is an alias for `full`). All planned v1 domains are implemented; OpenTelemetry OTLP export (traces, metrics, logs) is implemented and opt-in via CLOCKIFY_TELEMETRY.
+Current phase: **Phase 0–8b (v1 complete + extensions)** — 117 tools across 18 domains (48 read + 69 opt-in write) (Workspaces, Users, Groups, Clients, Projects, Tasks, Tags, Time entries, Reports, Shared reports, Time off, Holidays, Expenses, Approvals, Custom fields, Scheduling, Invoices, Webhooks). Writes (create/update/delete for clients/projects/tasks/tags/time_entries/holidays, plus time-entry duplicate/bulk, time-off policy/request create/approve/reject/withdraw, expense + expense-category create/update/delete/archive, approval submit/resubmit/update, custom-field create/update/delete and project set/remove, scheduling assignment create/update/delete/publish/copy, invoice create/update/change-status/duplicate/delete and item/payment management, and webhook create/update/delete/generate-token) register according to CLOCKIFY_ACCESS_MODE: `read` (default, none), `time-tracking` (only time-entry writes — duplicate/bulk self-scoped to the authenticated user), or `full` (all writes; CLOCKIFY_ENABLE_WRITES=true is an alias for `full`). All planned v1 domains are implemented; OpenTelemetry OTLP export (traces, metrics, logs) is implemented and opt-in via CLOCKIFY_TELEMETRY.
 
 ## Architecture
 
@@ -55,7 +55,7 @@ Read-only by default; write tools register per CLOCKIFY_ACCESS_MODE (gated in ea
 ## Development Conventions
 
 - `uv run` for all commands — do not activate the venv manually.
-- Tests: `uv run pytest -q` → expect 219 passed, 21 skipped (live-smoke tests skip without CLOCKIFY_LIVE_TEST). Add tests for every new tool in `tests/`.
+- Tests: `uv run pytest -q` → expect 220 passed, 21 skipped (live-smoke tests skip without CLOCKIFY_LIVE_TEST). Add tests for every new tool in `tests/`.
 - Lint: `uv run ruff check src/ tests/` must be clean before commit.
 - Conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`.
 - Never document or register tools that don't exist yet. Keep README accurate to implemented state.

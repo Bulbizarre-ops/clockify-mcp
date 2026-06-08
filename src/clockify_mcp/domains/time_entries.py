@@ -226,7 +226,7 @@ async def stop_running_timer(
     )
 
 
-def register(mcp: "FastMCP", client: ClockifyClient) -> None:
+def register(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def list_time_entries(
         user_id: str,
@@ -288,7 +288,7 @@ def register(mcp: "FastMCP", client: ClockifyClient) -> None:
         _register_time_tracking_writes(mcp, client)
 
 
-def _register_writes(mcp: "FastMCP", client: ClockifyClient) -> None:
+def _register_writes(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def create_time_entry(
         start: str,
@@ -414,7 +414,7 @@ def _register_writes(mcp: "FastMCP", client: ClockifyClient) -> None:
         )
 
 
-def _register_time_tracking_writes(mcp: "FastMCP", client: ClockifyClient) -> None:
+def _register_time_tracking_writes(mcp: FastMCP, client: ClockifyClient) -> None:
     """Write tools for the 'time-tracking' access tier: log/manage time entries only.
 
     create/update/delete are the same as full mode (update/delete act on an entry by
