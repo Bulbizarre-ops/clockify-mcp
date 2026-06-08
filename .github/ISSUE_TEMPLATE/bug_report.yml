@@ -1,0 +1,46 @@
+name: Bug report
+description: Report a problem with clockify-mcp
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the bug and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Tool called, arguments, and the prompt/client used.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: clockify-mcp version
+      placeholder: "0.2.2"
+    validations:
+      required: true
+  - type: dropdown
+    id: access-mode
+    attributes:
+      label: Access mode
+      options:
+        - read
+        - time-tracking
+        - full
+    validations:
+      required: false
+  - type: input
+    id: client
+    attributes:
+      label: MCP client
+      placeholder: "Claude Desktop / Cursor / ..."
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant error output. Redact your API key and any IDs you consider sensitive.
+      render: shell
