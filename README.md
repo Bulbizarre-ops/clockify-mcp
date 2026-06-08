@@ -1,5 +1,7 @@
 # clockify-mcp
 
+<!-- mcp-name: io.github.tracegazer/clockify-mcp -->
+
 MCP server for the [Clockify](https://clockify.me) time-tracking API.
 
 Expose Clockify workspaces, users, groups, clients, projects, tasks, tags, time entries, reports, time off, holidays, expenses, approvals, custom fields, scheduling, invoices, and webhooks as [Model Context Protocol](https://modelcontextprotocol.io) tools so any MCP-compatible client (Claude Desktop, Cursor, etc.) can query your time-tracking data in natural language.

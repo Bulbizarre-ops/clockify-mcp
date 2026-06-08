@@ -54,5 +54,3 @@ All report + shared-report endpoints live on the **reports host**
   fixedDate/visibleToUsers/visibleToUserGroups ONLY. delete → 204. generate-by-id is
   `GET /v1/shared-reports/{id}` (no workspace), still ApiKey-authenticated.
 - All shared-report + report endpoints on the reports host.
-</content>
-</invoke>

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/mcpb/main/dist/dxt-manifest.schema.json",
+  "manifest_version": "0.4",
+  "name": "clockify-mcp",
+  "display_name": "Clockify Time Tracking",
+  "version": "0.2.2",
+  "description": "MCP server for the Clockify time-tracking API.",
+  "long_description": "Exposes Clockify operations as MCP tools across 18 domains: workspaces, users, groups, clients, projects, tasks, tags, time entries, reports (incl. attendance/expense + file export), shared reports, time off, holidays, expenses, approvals, custom fields, scheduling, invoices, and webhooks. Read-only by default; write operations are opt-in via CLOCKIFY_ACCESS_MODE (read | time-tracking | full).",
+  "author": {
+    "name": "tracegazer",
+    "email": "carlsuarez.07@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tracegazer/clockify-mcp.git"
+  },
+  "license": "MIT",
+  "keywords": ["clockify", "time-tracking", "mcp", "model-context-protocol"],
+  "server": {
+    "type": "python",
+    "entry_point": "server/main.py",
+    "mcp_config": {
+      "command": "uvx",
+      "args": ["clockify-mcp"],
+      "env": {
+        "CLOCKIFY_API_KEY": "${user_config.CLOCKIFY_API_KEY}",
+        "CLOCKIFY_ACCESS_MODE": "${user_config.CLOCKIFY_ACCESS_MODE}",
+        "CLOCKIFY_DEFAULT_WORKSPACE_ID": "${user_config.CLOCKIFY_DEFAULT_WORKSPACE_ID}"
+      }
+    }
+  },
+  "user_config": {
+    "CLOCKIFY_API_KEY": {
+      "type": "string",
+      "title": "Clockify API Key",
+      "description": "API key used to authenticate against the Clockify API (Profile Settings -> API).",
+      "required": true,
+      "sensitive": true
+    },
+    "CLOCKIFY_ACCESS_MODE": {
+      "type": "string",
+      "title": "Access Mode",
+      "description": "Which write operations are enabled: read (read-only, default), time-tracking, or full.",
+      "required": false,
+      "default": "read"
+    },
+    "CLOCKIFY_DEFAULT_WORKSPACE_ID": {
+      "type": "string",
+      "title": "Default Workspace ID",
+      "description": "Default workspace id used when a tool call omits workspace_id.",
+      "required": false
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "python": ">=3.12,<4.0"
+    }
+  }
+}
