@@ -1,5 +1,12 @@
 # clockify-mcp
 
+[![CI](https://github.com/tracegazer/clockify-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/tracegazer/clockify-mcp/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/clockify-mcp)](https://pypi.org/project/clockify-mcp/)
+[![Python](https://img.shields.io/pypi/pyversions/clockify-mcp)](https://pypi.org/project/clockify-mcp/)
+[![License: MIT](https://img.shields.io/pypi/l/clockify-mcp)](LICENSE)
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-published-0a7ea4)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.tracegazer/clockify-mcp)
+[![Smithery](https://smithery.ai/badge/tracegazer/clockify-mcp)](https://smithery.ai/servers/tracegazer/clockify-mcp)
+
 <!-- mcp-name: io.github.tracegazer/clockify-mcp -->
 
 > A [Model Context Protocol](https://modelcontextprotocol.io) server for the [Clockify](https://clockify.me) **time-tracking API**.
