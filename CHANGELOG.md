@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `py.typed` marker so downstream consumers get type information.
 - CI jobs for packaging (`uv build` + import smoke) and dependency auditing (`pip-audit`).
+- Release workflow: on `v*` tag, builds and publishes to PyPI via Trusted
+  Publishing (OIDC) and creates a GitHub release with artifacts.
 - Dependabot configuration for Python deps and GitHub Actions.
 - `SECURITY.md`, `CONTRIBUTING.md`, issue/PR templates.
 

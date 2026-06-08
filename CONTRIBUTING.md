@@ -51,8 +51,17 @@ When cutting a release, bump the version in **all** of these and keep them in sy
 not need editing. `bundle/manifest.json` is stamped automatically by
 `scripts/build-mcpb.sh`.
 
-Then tag and publish:
+Then tag and push:
 
 ```bash
 git tag vX.Y.Z && git push --tags
 ```
+
+Pushing a `v*` tag triggers the **Release** workflow, which builds the sdist +
+wheel, verifies the tag matches `pyproject.toml`, publishes to PyPI via Trusted
+Publishing (OIDC — no token), and creates a GitHub release with the artifacts.
+
+> One-time setup on PyPI: register a Trusted Publisher for this project
+> (PyPI → project → Publishing) pointing at owner `tracegazer`, repo
+> `clockify-mcp`, workflow `release.yml`, environment `pypi`. For the very first
+> upload, use PyPI's "pending publisher" form.
