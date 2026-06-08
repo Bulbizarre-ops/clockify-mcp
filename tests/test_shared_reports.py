@@ -65,11 +65,35 @@ async def test_create_shared_report_builds_body(config_writes):
     assert body["type"] == "SUMMARY"
     assert body["isPublic"] is False
     assert body["visibleToUsers"] == ["u1"]
+    # SUMMARY type must carry its summaryFilter, or the API rejects the create with
+    # 400 "Selecciona un filtro resumido" (caught live).
     assert body["filter"] == {
         "dateRangeStart": "2026-06-01T00:00:00Z",
         "dateRangeEnd": "2026-06-30T23:59:59Z",
+        "summaryFilter": {"groups": ["PROJECT"]},
     }
     assert "fixedDate" not in body  # dropped when None
+    await client.aclose()
+
+
+@respx.mock
+async def test_create_shared_report_filter_override(config_writes):
+    route = respx.post(f"{BASE}/workspaces/ws1/shared-reports").mock(
+        return_value=httpx.Response(200, json={"id": "sr1"})
+    )
+    client = ClockifyClient(config_writes)
+    await shared_reports.create_shared_report(
+        client,
+        name="Custom",
+        type="SUMMARY",
+        date_range_start="2026-06-01T00:00:00Z",
+        date_range_end="2026-06-30T23:59:59Z",
+        report_filter={"summaryFilter": {"groups": ["USER", "DATE"]}},
+    )
+    body = json.loads(route.calls.last.request.content)
+    # caller's report_filter overrides the default sub-filter
+    assert body["filter"]["summaryFilter"] == {"groups": ["USER", "DATE"]}
+    assert body["filter"]["dateRangeStart"] == "2026-06-01T00:00:00Z"
     await client.aclose()
 
 

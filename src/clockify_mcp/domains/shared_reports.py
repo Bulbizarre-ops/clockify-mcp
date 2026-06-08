@@ -17,6 +17,17 @@ from .workspaces import resolve_workspace_id
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
 
+# A shared report's filter needs the sub-filter matching its type, or the API rejects
+# the create (e.g. SUMMARY without summaryFilter -> 400 "Selecciona un filtro resumido").
+# These defaults mirror the live-verified ones from the report generators; callers can
+# override the whole filter via create_shared_report's report_filter argument.
+_SHARED_REPORT_DEFAULT_FILTER: dict[str, dict[str, Any]] = {
+    "DETAILED": {"detailedFilter": {}},
+    "SUMMARY": {"summaryFilter": {"groups": ["PROJECT"]}},
+    "WEEKLY": {"weeklyFilter": {"group": "USER", "subgroup": "TIME"}},
+    "ATTENDANCE": {"attendanceFilter": {}},
+}
+
 
 async def list_shared_reports(
     client: ClockifyClient,
@@ -83,15 +94,26 @@ async def create_shared_report(
     fixed_date: bool | None = None,
     visible_to_users: list[str] | None = None,
     visible_to_user_groups: list[str] | None = None,
+    report_filter: dict[str, Any] | None = None,
 ) -> Any:
     """Create (save) a shared report.
 
     type is one of DETAILED, WEEKLY, SUMMARY, EXPENSE_DETAILED, ATTENDANCE, and other
     report kinds (see the Clockify docs). The report's filter requires a date range
-    (date_range_start/end, ISO-8601). is_public=True makes it accessible without sign-in;
-    otherwise restrict it with visible_to_users / visible_to_user_groups (lists of ids).
+    (date_range_start/end, ISO-8601) AND the sub-filter for its type (e.g. SUMMARY needs
+    a summaryFilter); a sensible default sub-filter is added for DETAILED/SUMMARY/WEEKLY/
+    ATTENDANCE. For other types, or to customize grouping, pass report_filter (merged into
+    the filter, overriding the defaults). is_public=True makes it accessible without
+    sign-in; otherwise restrict it with visible_to_users / visible_to_user_groups.
     """
     ws = resolve_workspace_id(client, workspace_id)
+    report_filter_body: dict[str, Any] = {
+        "dateRangeStart": date_range_start,
+        "dateRangeEnd": date_range_end,
+        **_SHARED_REPORT_DEFAULT_FILTER.get(type, {}),
+    }
+    if report_filter:
+        report_filter_body.update(report_filter)
     body = drop_none(
         {
             "name": name,
@@ -100,7 +122,7 @@ async def create_shared_report(
             "fixedDate": fixed_date,
             "visibleToUsers": visible_to_users,
             "visibleToUserGroups": visible_to_user_groups,
-            "filter": {"dateRangeStart": date_range_start, "dateRangeEnd": date_range_end},
+            "filter": report_filter_body,
         }
     )
     return await client.report(f"workspaces/{ws}/shared-reports", body)
@@ -203,10 +225,13 @@ def _register_writes(mcp: "FastMCP", client: ClockifyClient) -> None:
         fixed_date: bool | None = None,
         visible_to_users: list[str] | None = None,
         visible_to_user_groups: list[str] | None = None,
+        report_filter: dict[str, Any] | None = None,
     ) -> Any:
         """Create a shared report. type is DETAILED/WEEKLY/SUMMARY/EXPENSE_DETAILED/
-        ATTENDANCE/etc.; the filter requires a date range. is_public=True shares it
-        publicly; otherwise scope with visible_to_users / visible_to_user_groups."""
+        ATTENDANCE/etc.; the filter needs a date range and the type's sub-filter (a
+        default is added for DETAILED/SUMMARY/WEEKLY/ATTENDANCE; pass report_filter to
+        customize or for other types). is_public=True shares it publicly; otherwise
+        scope with visible_to_users / visible_to_user_groups."""
         return await create_shared_report_fn(
             client,
             name=name,
@@ -218,6 +243,7 @@ def _register_writes(mcp: "FastMCP", client: ClockifyClient) -> None:
             fixed_date=fixed_date,
             visible_to_users=visible_to_users,
             visible_to_user_groups=visible_to_user_groups,
+            report_filter=report_filter,
         )
 
     @mcp.tool()
