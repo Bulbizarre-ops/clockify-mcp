@@ -1,0 +1,18 @@
+# Clockify MCP — configuration template
+# Copy to: ~/.config/clockify-mcp/config.toml
+#
+#   mkdir -p ~/.config/clockify-mcp
+#   cp config.toml.example ~/.config/clockify-mcp/config.toml
+#
+# Environment variables always override these values.
+
+api_key = "your-clockify-api-key"
+
+# region = "global"            # global | euc1 (EU) | use2 (USA) | euw2 (UK) | apse2 (AU)
+# base_url = ""                # override for subdomain workspaces, e.g. https://acme.clockify.me
+# default_workspace_id = ""    # optional; tools fall back to this when workspace_id is omitted
+
+# enable_writes = false        # set true to register create/update/delete tools (later phases)
+
+# telemetry_enabled = false    # OpenTelemetry traces/metrics/logs (ported in a later phase)
+# telemetry_detail = "metadata"  # metadata (default) | ids | full
