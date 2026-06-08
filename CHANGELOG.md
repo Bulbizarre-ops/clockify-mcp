@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-08
+
 ### Added
 - `py.typed` marker so downstream consumers get type information.
 - CI jobs for packaging (`uv build` + import smoke) and dependency auditing (`pip-audit`).
@@ -54,7 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release: read tools across core Clockify domains, opt-in write tools
   gated by `CLOCKIFY_ACCESS_MODE`, and optional OpenTelemetry observability.
 
-[Unreleased]: https://github.com/tracegazer/clockify-mcp/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/tracegazer/clockify-mcp/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/tracegazer/clockify-mcp/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/tracegazer/clockify-mcp/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/tracegazer/clockify-mcp/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/tracegazer/clockify-mcp/compare/v0.1.0...v0.2.0
