@@ -2,9 +2,11 @@
 
 <!-- mcp-name: io.github.tracegazer/clockify-mcp -->
 
-MCP server for the [Clockify](https://clockify.me) time-tracking API.
+> A [Model Context Protocol](https://modelcontextprotocol.io) server for the [Clockify](https://clockify.me) **time-tracking API**.
 
-Expose Clockify workspaces, users, groups, clients, projects, tasks, tags, time entries, reports, time off, holidays, expenses, approvals, custom fields, scheduling, invoices, and webhooks as [Model Context Protocol](https://modelcontextprotocol.io) tools so any MCP-compatible client (Claude Desktop, Cursor, etc.) can query your time-tracking data in natural language.
+Give your AI assistant access to your Clockify data — query workspaces, projects, and time entries, generate reports, log hours, and manage clients, invoices, and more — all through natural language.
+
+**112 tools** across 18 domains. Read-only by default, with optional write operations behind explicit opt-in.
 
 ## What can it do?
 
@@ -63,26 +65,26 @@ Expose Clockify workspaces, users, groups, clients, projects, tasks, tags, time 
 
 ```bash
 pip install clockify-mcp
-# or run without installing:
+```
+
+Or run without installing (requires [uv](https://docs.astral.sh/uv/)):
+
+```bash
 uvx clockify-mcp
 ```
 
-### 2. Get your API key
+### 2. Connect to Claude Desktop
 
-Log into Clockify → **Profile Settings** → **API** → copy your API key.
+Add this to your `claude_desktop_config.json`:
 
-### 3. Connect to Claude Desktop
-
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or the equivalent on your platform:
-
-```json
+```jsonc
 {
   "mcpServers": {
     "clockify": {
       "command": "uvx",
       "args": ["clockify-mcp"],
       "env": {
-        "CLOCKIFY_API_KEY": "your-key"
+        "CLOCKIFY_API_KEY": "your-api-key"
       }
     }
   }
@@ -90,6 +92,64 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 ```
 
 Restart Claude Desktop. Ask: _"What workspaces do I have in Clockify?"_
+
+<details>
+<summary>Using pip install instead of uvx</summary>
+
+```jsonc
+{
+  "mcpServers": {
+    "clockify": {
+      "command": "clockify-mcp",
+      "env": {
+        "CLOCKIFY_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>Enabling write operations</summary>
+
+By default the server is **read-only**. Opt into writes with `CLOCKIFY_ACCESS_MODE`:
+
+| Mode | Reads | Writes |
+|------|------------|--------|
+| `read` (default) | everything | nothing |
+| `time-tracking` | everything | time-entry writes only (log & edit hours) |
+| `full` | everything | all write tools (clients, projects, invoices, …) |
+
+```jsonc
+{
+  "mcpServers": {
+    "clockify": {
+      "command": "uvx",
+      "args": ["clockify-mcp"],
+      "env": {
+        "CLOCKIFY_API_KEY": "your-api-key",
+        "CLOCKIFY_ACCESS_MODE": "full"
+      }
+    }
+  }
+}
+```
+
+> **Compatibility:** the legacy `CLOCKIFY_ENABLE_WRITES=true` still works and maps to `full`.
+> If both are set, `CLOCKIFY_ACCESS_MODE` wins. In `time-tracking` mode, `duplicate`/`bulk`
+> always act on the authenticated user; for `update`/`delete` by id the assistant is told to
+> confirm before touching an entry that may belong to someone else.
+
+> **Warning:** write mode lets the connected agent create, modify, and delete real data through
+> your Clockify credential. `delete_*` tools and `withdraw_time_off_request` are irreversible.
+
+</details>
+
+### 3. Get your API key
+
+Log into Clockify → **Profile Settings** → **API** → copy your API key.
 
 ## Configuration
 
@@ -123,14 +183,20 @@ api_key = "your-clockify-api-key"
 
 > **Tip:** create the config directory first: `mkdir -p ~/.config/clockify-mcp`
 
+## Running the server
+
+```bash
+clockify-mcp                       # STDIO transport (default)
+clockify-mcp --transport sse       # SSE/HTTP transport
+```
+
+> **Security note:** STDIO (the default) keeps everything local. The `sse` and `streamable-http` transports have no built-in authentication — only use them bound to loopback or behind an authenticated reverse proxy.
+
 ## Notes
 
-- **Auth:** Clockify uses a single API key sent as the `X-Api-Key` HTTP header. No OAuth. Get your key from **Profile Settings → API** in the Clockify web app.
-- **Regions:** By default the server targets `https://api.clockify.me/api/v1`. Set `CLOCKIFY_REGION` to route to a regional endpoint (e.g. `euc1` → `https://euc1.clockify.me/api/v1`). For custom subdomain workspaces use `CLOCKIFY_BASE_URL`.
 - **Workspace scope:** Almost every Clockify operation is scoped to a workspace (`/workspaces/{workspaceId}/...`). Tools accept an optional `workspace_id`; when omitted they fall back to `CLOCKIFY_DEFAULT_WORKSPACE_ID`. If neither is set, the tool asks you to resolve one first via `list_workspaces`.
-- **Read-only by default:** The 48 read tools are always available. Set `CLOCKIFY_ACCESS_MODE=time-tracking` to additionally register the 5 time-entry write tools, or `CLOCKIFY_ACCESS_MODE=full` (equivalent: `CLOCKIFY_ENABLE_WRITES=true`) to register all 64 write tools; `delete_*` tools and `withdraw_time_off_request` are irreversible.
 - **Pagination:** list tools take optional `page`/`page_size` and return one page. The high-volume lists (`list_time_entries`, `list_projects`, `list_clients`, `list_tasks`, `list_tags`, `list_users`) also accept `fetch_all=true` to follow pagination and return every page concatenated (may make several API calls).
-- **Paid features:** Several domains need a paid plan **and** an admin to enable the module in Workspace Settings — see [Paid features & enabling them](#paid-features--enabling-them-in-clockify). The server's error categories tell you which is missing.
+- **Errors:** failures carry a category — `PLAN_REQUIRED`, `ACCESS_DENIED`, or `AUTH` — so the assistant knows whether to ask you to upgrade the plan, enable a module, or fix the key. See [Paid features](#paid-features--enabling-them-in-clockify).
 
 ## Paid features & enabling them in Clockify
 
@@ -156,16 +222,45 @@ When an operation fails, the error category says what to do:
 
 ## Observability (optional)
 
-The server exports OpenTelemetry traces, metrics, and logs over OTLP. It is **opt-in and off by default** — when disabled, `opentelemetry` is never imported. Enable it with the optional extra:
+The server can emit OpenTelemetry traces, metrics, and logs — completely opt-in and vendor-neutral. Export to any OTLP-compatible backend (Dynatrace, Grafana, Datadog, Jaeger, etc.). When disabled, `opentelemetry` is never imported.
 
 ```bash
 pip install "clockify-mcp[telemetry]"
+
 export CLOCKIFY_TELEMETRY=1
 ```
 
-When enabled you get a span per MCP tool call (`execute_tool <name>`) and per Clockify API request, plus tool-duration/error metrics and structured logs. `CLOCKIFY_TELEMETRY_DETAIL` controls how much argument/payload data is attached (`metadata` default → `ids` → `full`); the API key is always redacted. OTLP endpoint and headers come from the standard OpenTelemetry env vars (`OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS`, `OTEL_SERVICE_NAME`, etc.).
+OTLP endpoint and headers are configured via standard OpenTelemetry env vars (not in the TOML file). `CLOCKIFY_TELEMETRY_DETAIL` controls how much argument/payload data is attached (`metadata` default → `ids` → `full`); the API key is always redacted.
 
-> **Dynatrace:** traces and logs work as-is, but Dynatrace's OTLP metrics ingest requires **delta** temporality — set `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=delta` or metric export fails with `400 Bad Request`. Endpoint: `https://{env-id}.live.dynatrace.com/api/v2/otlp`, header `Authorization=Api-Token dt0c01.…` (token needs the `openTelemetryTrace.ingest`, `metrics.ingest`, `logs.ingest` scopes).
+<details>
+<summary>Dynatrace setup</summary>
+
+```bash
+export OTEL_EXPORTER_OTLP_ENDPOINT="https://<your-env>.live.dynatrace.com/api/v2/otlp"
+export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Api-Token <YOUR_DT_TOKEN>"
+export OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=delta
+export OTEL_SERVICE_NAME=clockify-mcp
+```
+
+Token scopes needed: `openTelemetryTrace.ingest`, `metrics.ingest`, `logs.ingest`. Dynatrace's OTLP metrics ingest requires **delta** temporality — without that env var, metric export fails with `400 Bad Request`.
+
+</details>
+
+<details>
+<summary>Generic OTLP collector</summary>
+
+```bash
+export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4318"
+export OTEL_SERVICE_NAME=clockify-mcp
+```
+
+</details>
+
+**Signals emitted:**
+
+- **Traces** — a span per MCP tool call (`execute_tool <name>`) and per Clockify API request
+- **Metrics** — `mcp.tool.duration`, `mcp.tool.errors`, and Clockify client request durations
+- **Logs** — tool errors and unexpected API response shapes, correlated to traces (OTLP only, never stdout)
 
 ## Development
 
@@ -181,4 +276,4 @@ uv run ruff check src/ tests/
 
 ## License
 
-MIT
+[MIT](LICENSE)
