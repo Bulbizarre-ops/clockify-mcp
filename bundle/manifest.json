@@ -4,8 +4,8 @@
   "name": "clockify-mcp",
   "display_name": "Clockify Time Tracking",
   "version": "0.2.2",
-  "description": "Full-coverage Clockify time-tracking server: 117 tools across 18 domains, read-only by default with opt-in writes.",
-  "long_description": "Exposes Clockify operations as 117 MCP tools across 18 domains: workspaces, users, groups, clients, projects, tasks, tags, time entries, reports (incl. attendance/expense + file export), shared reports, time off, holidays, expenses, approvals, custom fields, scheduling, invoices, and webhooks. Read-only by default; write operations are opt-in via CLOCKIFY_ACCESS_MODE (read | time-tracking | full).",
+  "description": "Clockify time-tracking MCP: 112 tools across 18 domains, read-only by default with opt-in writes.",
+  "long_description": "Exposes Clockify operations as 112 MCP tools across 18 domains: workspaces, users, groups, clients, projects, tasks, tags, time entries, reports (incl. attendance/expense + file export), shared reports, time off, holidays, expenses, approvals, custom fields, scheduling, invoices, and webhooks. Read-only by default; write operations are opt-in via CLOCKIFY_ACCESS_MODE (read | time-tracking | full).",
   "author": {
     "name": "tracegazer",
     "email": "carlsuarez.07@gmail.com"

@@ -13,7 +13,7 @@
 
 Give your AI assistant access to your Clockify data — query workspaces, projects, and time entries, generate reports, log hours, and manage clients, invoices, and more — all through natural language.
 
-**117 tools** across 18 domains. Read-only by default, with optional write operations behind explicit opt-in.
+**112 tools** across 18 domains. Read-only by default, with optional write operations behind explicit opt-in.
 
 ## Install in one click
 
@@ -51,7 +51,7 @@ The `.mcpb` is attached to every [GitHub Release](https://github.com/tracegazer/
 † **Time off**, **Holidays**, **Expenses**, **Approvals**, **Custom fields**, **Scheduling**, **Invoices**, and **Webhooks** are paid Clockify features — these tools error (HTTP 402/403/404) on plans without them.
 ‡ `generate_attendance_report` and `generate_expense_report` (and `export_report` for those two types) need the workspace's attendance/Expenses add-ons; the time-based reports (detailed/summary/weekly) and shared reports work on the free plan.
 
-**Write tools** (opt-in — set `CLOCKIFY_ENABLE_WRITES=true`):
+**Write tools** (opt-in — set `CLOCKIFY_ACCESS_MODE=full`):
 
 | Domain | Tools | Tool names |
 |--------|------:|------------|
