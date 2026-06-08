@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI jobs for packaging (`uv build` + import smoke) and dependency auditing (`pip-audit`).
 - Release workflow: on `v*` tag, builds and publishes to PyPI via Trusted
   Publishing (OIDC) and creates a GitHub release with artifacts.
+- Release workflow also publishes the manifest to the official MCP Registry
+  (GitHub OIDC, no token), stamping `server.json` with the tag version so the
+  registry never lags the released package.
 - Dependabot configuration for Python deps and GitHub Actions.
 - `SECURITY.md`, `CONTRIBUTING.md`, issue/PR templates.
 

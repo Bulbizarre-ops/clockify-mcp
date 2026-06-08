@@ -6,7 +6,7 @@
 
 Give your AI assistant access to your Clockify data — query workspaces, projects, and time entries, generate reports, log hours, and manage clients, invoices, and more — all through natural language.
 
-**112 tools** across 18 domains. Read-only by default, with optional write operations behind explicit opt-in.
+**117 tools** across 18 domains. Read-only by default, with optional write operations behind explicit opt-in.
 
 ## What can it do?
 

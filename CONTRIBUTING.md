@@ -59,7 +59,11 @@ git tag vX.Y.Z && git push --tags
 
 Pushing a `v*` tag triggers the **Release** workflow, which builds the sdist +
 wheel, verifies the tag matches `pyproject.toml`, publishes to PyPI via Trusted
-Publishing (OIDC — no token), and creates a GitHub release with the artifacts.
+Publishing (OIDC — no token), creates a GitHub release with the artifacts, and
+publishes the manifest to the official **MCP Registry**. The registry step stamps
+`server.json` with the tag version automatically, so it can never lag the package
+(no token needed — it authenticates via GitHub OIDC against the `io.github.tracegazer`
+namespace, which matches the repo owner).
 
 > One-time setup on PyPI: register a Trusted Publisher for this project
 > (PyPI → project → Publishing) pointing at owner `tracegazer`, repo

@@ -63,3 +63,43 @@ jobs:
         with:
           files: dist/*
           generate_release_notes: true
+
+  mcp-registry-publish:
+    needs: pypi-publish  # the registry validates the package on PyPI, so publish there first
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # OIDC for MCP Registry auth (io.github.* namespace) — no token
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stamp server.json with the tag version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          VERSION="${TAG#v}"
+          python3 - "$VERSION" <<'PY'
+          import json, sys
+          version = sys.argv[1]
+          with open("server.json") as fh:
+              data = json.load(fh)
+          data["version"] = version
+          for pkg in data.get("packages", []):
+              pkg["version"] = version
+          with open("server.json", "w") as fh:
+              json.dump(data, fh, indent=2)
+              fh.write("\n")
+          print("stamped server.json ->", version)
+          PY
+      - name: Install mcp-publisher
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          URL=$(gh api repos/modelcontextprotocol/registry/releases/latest \
+            --jq '.assets[] | select(.name | test("linux.*(amd64|x86_64).*tar.gz$")) | .browser_download_url' \
+            | head -n1)
+          echo "downloading $URL"
+          curl -sL "$URL" | tar xz mcp-publisher
+          ./mcp-publisher --version || true
+      - name: Log in to the MCP Registry (GitHub OIDC)
+        run: ./mcp-publisher login github-oidc
+      - name: Publish to the MCP Registry
+        run: ./mcp-publisher publish
