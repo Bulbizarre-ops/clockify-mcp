@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-06-08
+
+### Fixed
+- Corrected the advertised tool count to **112 distinct tools** (was 117). The 117
+  figure counted `@mcp.tool` decorators; `time_entries` re-registers 5 time-entry
+  write tools for the `time-tracking` access tier (mutually exclusive with `full`),
+  so 5 were duplicate registrations. 112 = 48 read + 64 write, matching the README
+  domain tables.
+- Unified the one-line description across pyproject / server.json / MCPB manifest.
+- README write-tools header now leads with `CLOCKIFY_ACCESS_MODE=full` instead of
+  the legacy `CLOCKIFY_ENABLE_WRITES=true`.
+
 ## [0.3.0] - 2026-06-08
 
 ### Added
@@ -56,7 +68,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release: read tools across core Clockify domains, opt-in write tools
   gated by `CLOCKIFY_ACCESS_MODE`, and optional OpenTelemetry observability.
 
-[Unreleased]: https://github.com/tracegazer/clockify-mcp/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/tracegazer/clockify-mcp/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/tracegazer/clockify-mcp/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/tracegazer/clockify-mcp/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/tracegazer/clockify-mcp/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/tracegazer/clockify-mcp/compare/v0.2.0...v0.2.1
