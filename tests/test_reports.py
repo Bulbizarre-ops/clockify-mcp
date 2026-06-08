@@ -131,6 +131,103 @@ async def test_export_report_summary_and_weekly_filters(config, tmp_path):
     await client.aclose()
 
 
+@respx.mock
+async def test_attendance_report_builds_body(config):
+    route = respx.post(
+        "https://reports.api.clockify.me/v1/workspaces/ws1/reports/attendance"
+    ).mock(return_value=httpx.Response(200, json={"rows": []}))
+    client = ClockifyClient(config)
+    result = await reports.generate_attendance_report(
+        client,
+        date_range_start="2021-01-01T00:00:00Z",
+        date_range_end="2021-01-31T23:59:59Z",
+        page=2,
+        page_size=10,
+        sort_column="DATE",
+        has_time_off=True,
+    )
+    assert result == {"rows": []}
+    body = _sent_body(route)
+    assert body["dateRangeStart"] == "2021-01-01T00:00:00Z"
+    assert body["attendanceFilter"] == {
+        "page": 2, "pageSize": 10, "sortColumn": "DATE", "hasTimeOff": True
+    }
+    await client.aclose()
+
+
+@respx.mock
+async def test_attendance_report_empty_filter(config):
+    route = respx.post(
+        "https://reports.api.clockify.me/v1/workspaces/ws1/reports/attendance"
+    ).mock(return_value=httpx.Response(200, json={}))
+    client = ClockifyClient(config)
+    await reports.generate_attendance_report(
+        client,
+        date_range_start="2021-01-01T00:00:00Z",
+        date_range_end="2021-01-31T23:59:59Z",
+    )
+    body = _sent_body(route)
+    assert body["attendanceFilter"] == {}  # all optional fields dropped
+    await client.aclose()
+
+
+@respx.mock
+async def test_expense_report_builds_body(config):
+    route = respx.post(
+        "https://reports.api.clockify.me/v1/workspaces/ws1/reports/expenses/detailed"
+    ).mock(return_value=httpx.Response(200, json={"expenses": [], "totals": {}}))
+    client = ClockifyClient(config)
+    result = await reports.generate_expense_report(
+        client,
+        date_range_start="2021-01-01T00:00:00Z",
+        date_range_end="2021-01-31T23:59:59Z",
+        page=1,
+        page_size=25,
+        sort_column="AMOUNT",
+        billable=True,
+    )
+    assert result == {"expenses": [], "totals": {}}
+    body = _sent_body(route)
+    assert body == {
+        "dateRangeStart": "2021-01-01T00:00:00Z",
+        "dateRangeEnd": "2021-01-31T23:59:59Z",
+        "page": 1,
+        "pageSize": 25,
+        "sortColumn": "AMOUNT",
+        "billable": True,
+    }
+    await client.aclose()
+
+
+@respx.mock
+async def test_export_report_attendance_and_expenses(config, tmp_path):
+    client = ClockifyClient(config)
+    a = respx.post(
+        "https://reports.api.clockify.me/v1/workspaces/ws1/reports/attendance"
+    ).mock(return_value=httpx.Response(200, content=b"att"))
+    await reports.export_report(
+        client, report_type="attendance", fmt="PDF", save_path=str(tmp_path / "a.pdf"),
+        date_range_start="2021-01-01T00:00:00Z", date_range_end="2021-01-07T23:59:59Z",
+    )
+    abody = json.loads(a.calls.last.request.content)
+    assert abody["attendanceFilter"] == {}
+    assert abody["exportType"] == "PDF"
+
+    e = respx.post(
+        "https://reports.api.clockify.me/v1/workspaces/ws1/reports/expenses/detailed"
+    ).mock(return_value=httpx.Response(200, content=b"exp"))
+    result = await reports.export_report(
+        client, report_type="expenses", fmt="CSV", save_path=str(tmp_path / "e.csv"),
+        date_range_start="2021-01-01T00:00:00Z", date_range_end="2021-01-07T23:59:59Z",
+    )
+    ebody = json.loads(e.calls.last.request.content)
+    assert "attendanceFilter" not in ebody and "detailedFilter" not in ebody
+    assert ebody["exportType"] == "CSV"
+    assert (tmp_path / "e.csv").read_bytes() == b"exp"
+    assert result["format"] == "CSV"
+    await client.aclose()
+
+
 async def test_export_report_rejects_bad_type(config, tmp_path):
     client = ClockifyClient(config)
     with pytest.raises(ValueError):

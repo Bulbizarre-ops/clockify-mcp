@@ -26,6 +26,7 @@ from .domains import (
     projects,
     reports,
     scheduling,
+    shared_reports,
     tags,
     tasks,
     time_entries,
@@ -86,6 +87,7 @@ def build_server(client: ClockifyClient, telemetry: Telemetry | None = None) -> 
     tasks.register(mcp, client)
     time_entries.register(mcp, client)
     reports.register(mcp, client)
+    shared_reports.register(mcp, client)
     time_off.register(mcp, client)
     holidays.register(mcp, client)
     expenses.register(mcp, client)

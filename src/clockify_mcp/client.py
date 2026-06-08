@@ -134,6 +134,18 @@ class ClockifyClient:
             "POST", self._config.reports_base, path, json=json, raw=True
         )
 
+    async def report_get(self, path: str, params: dict[str, Any] | None = None) -> Any:
+        """GET from the Reports API host (e.g. shared-reports list / generate-by-id)."""
+        return await self._request("GET", self._config.reports_base, path, params=params)
+
+    async def report_put(self, path: str, json: dict[str, Any] | None = None) -> Any:
+        """PUT to the Reports API host (e.g. update a shared report)."""
+        return await self._request("PUT", self._config.reports_base, path, json=json)
+
+    async def report_delete(self, path: str, params: dict[str, Any] | None = None) -> Any:
+        """DELETE on the Reports API host (e.g. delete a shared report)."""
+        return await self._request("DELETE", self._config.reports_base, path, params=params)
+
     async def post_multipart(
         self,
         path: str,

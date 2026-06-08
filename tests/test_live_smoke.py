@@ -29,6 +29,7 @@ from clockify_mcp.domains import (
     projects,
     reports,
     scheduling,
+    shared_reports,
     tags,
     tasks,
     time_entries,
@@ -461,6 +462,103 @@ async def test_live_approval_submit_withdraw(live):
         )
     finally:
         await time_entries.delete_time_entry(client, workspace_id=ws, time_entry_id=eid)
+
+
+async def test_live_export_report(live, tmp_path):
+    """Phase 8a: export_report writes a real binary file. Reports are a free feature,
+    so this runs on any plan. CSV is the smallest export — assert non-empty bytes."""
+    client, ws, _ = live
+    dest = tmp_path / "report.csv"
+    meta = await reports.export_report(
+        client, workspace_id=ws, report_type="detailed", fmt="CSV", save_path=str(dest),
+        date_range_start="2026-06-01T00:00:00Z", date_range_end="2026-06-07T23:59:59Z",
+    )
+    assert meta["bytes"] > 0
+    assert meta["format"] == "CSV"
+    assert dest.exists() and dest.stat().st_size == meta["bytes"]
+
+
+async def test_live_create_for_user_and_stop_timer(live):
+    """Phase 8a (FULL mode): create_time_entry_for_user starts a running timer for a
+    user (here ourselves — a free feature), then stop_running_timer ends it. Clean up
+    by deleting the entry."""
+    client, ws, me_id = live
+    created = await time_entries.create_time_entry_for_user(
+        client, workspace_id=ws, user_id=me_id,
+        start="2020-01-03T09:00:00Z", description=PREFIX + "for-user",
+    )
+    eid = created["id"]
+    try:
+        assert created.get("timeInterval", {}).get("end") in (None, ""), "expected a running timer"
+        await time_entries.stop_running_timer(
+            client, workspace_id=ws, user_id=me_id, end="2020-01-03T10:00:00Z"
+        )
+        stopped = await time_entries.get_time_entry(client, workspace_id=ws, time_entry_id=eid)
+        assert stopped["timeInterval"]["end"], "timer should be stopped (end set)"
+    finally:
+        await time_entries.delete_time_entry(client, workspace_id=ws, time_entry_id=eid)
+
+
+async def test_live_attendance_and_expense_reports(live):
+    """Phase 8b: attendance + detailed-expense report generators. Both need paid add-ons,
+    so skip when the plan/workspace doesn't have them."""
+    client, ws, _ = live
+    rng = {"date_range_start": "2026-06-01T00:00:00Z", "date_range_end": "2026-06-07T23:59:59Z"}
+    try:
+        att = await reports.generate_attendance_report(client, workspace_id=ws, **rng)
+    except ClockifyAPIError as exc:
+        _skip_if_feature_unavailable(exc)  # always raises
+    assert att is not None
+    try:
+        exp = await reports.generate_expense_report(client, workspace_id=ws, **rng)
+    except ClockifyAPIError as exc:
+        _skip_if_feature_unavailable(exc)  # always raises
+    assert "expenses" in exp
+
+
+async def test_live_shared_report_roundtrip(live):
+    """Phase 8b: shared-report CRUD (reports host). Create -> get-by-id -> update -> delete.
+    Skip if the plan doesn't allow shared reports."""
+    client, ws, _ = live
+    try:
+        created = await shared_reports.create_shared_report(
+            client, workspace_id=ws, name=PREFIX + "shared", type="SUMMARY",
+            date_range_start="2026-06-01T00:00:00Z", date_range_end="2026-06-07T23:59:59Z",
+        )
+    except ClockifyAPIError as exc:
+        _skip_if_feature_unavailable(exc)
+        return  # unreachable
+    sr_id = created["id"]
+    try:
+        fetched = await shared_reports.get_shared_report(client, shared_report_id=sr_id)
+        assert fetched is not None
+        await shared_reports.update_shared_report(
+            client, workspace_id=ws, shared_report_id=sr_id, name=PREFIX + "shared2",
+        )
+        listed = await shared_reports.list_shared_reports(client, workspace_id=ws)
+        reports_list = listed.get("sharedReports", listed) if isinstance(listed, dict) else listed
+        assert any(r.get("id") == sr_id for r in reports_list)
+    finally:
+        await shared_reports.delete_shared_report(client, workspace_id=ws, shared_report_id=sr_id)
+
+
+async def test_live_fetch_all_pagination(live):
+    """Phase 8b: fetch_all on a list tool returns a concatenated list (free feature).
+    Create a client, then list with fetch_all=True and confirm it is included."""
+    client, ws, _ = live
+    created = await clients.create_client(client, workspace_id=ws, name=PREFIX + "fa-client")
+    cid = created["id"]
+    try:
+        everything = await clients.list_clients(
+            client, workspace_id=ws, fetch_all=True, page_size=5
+        )
+        assert isinstance(everything, list)
+        assert any(c.get("id") == cid for c in everything)
+    finally:
+        await clients.update_client(
+            client, workspace_id=ws, client_id=cid, name=PREFIX + "fa-client", archived=True
+        )
+        await clients.delete_client(client, workspace_id=ws, client_id=cid)
 
 
 async def test_live_time_tracking_self_scoped(live):

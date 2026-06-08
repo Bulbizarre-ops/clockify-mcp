@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from ..bodies import drop_none
 from ..client import ClockifyClient
-from ..pagination import page_params
+from ..pagination import fetch_all_pages, page_params
 from .workspaces import resolve_workspace_id
 
 if TYPE_CHECKING:
@@ -25,24 +25,31 @@ async def list_tags(
     sort_order: str | None = None,
     page: int | None = None,
     page_size: int | None = None,
+    fetch_all: bool = False,
 ) -> Any:
     """List tags on the workspace, optionally filtered by name (paginated).
 
     Set strict_name_search=True for an exact name match; archived=True includes
     archived tags; excluded_ids omits specific tag ids. sort_column is one of NAME;
-    sort_order is ASCENDING or DESCENDING.
+    sort_order is ASCENDING or DESCENDING. Set fetch_all=True to follow pagination and
+    return every page concatenated (ignores page; may make several API calls).
     """
     ws = resolve_workspace_id(client, workspace_id)
-    params = {
+    base = {
         "name": name,
         "strict-name-search": strict_name_search,
         "archived": archived,
         "excluded-ids": excluded_ids,
         "sort-column": sort_column,
         "sort-order": sort_order,
-        **page_params(page, page_size),
     }
-    return await client.get(f"workspaces/{ws}/tags", params=params)
+    path = f"workspaces/{ws}/tags"
+    if fetch_all:
+        return await fetch_all_pages(
+            lambda p, ps: client.get(path, params={**base, **page_params(p, ps)}),
+            page_size=page_size,
+        )
+    return await client.get(path, params={**base, **page_params(page, page_size)})
 
 
 async def get_tag(
@@ -96,8 +103,10 @@ def register(mcp: "FastMCP", client: ClockifyClient) -> None:
         sort_order: str | None = None,
         page: int | None = None,
         page_size: int | None = None,
+        fetch_all: bool = False,
     ) -> Any:
-        """List tags on the workspace, optionally filtered by name (paginated)."""
+        """List tags on the workspace, optionally filtered by name (paginated).
+        fetch_all=True follows pagination and returns every page concatenated."""
         return await list_tags_fn(
             client,
             workspace_id=workspace_id,
@@ -109,6 +118,7 @@ def register(mcp: "FastMCP", client: ClockifyClient) -> None:
             sort_order=sort_order,
             page=page,
             page_size=page_size,
+            fetch_all=fetch_all,
         )
 
     @mcp.tool()

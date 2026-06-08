@@ -6,7 +6,7 @@ Expose Clockify workspaces, users, groups, clients, projects, tasks, tags, time 
 
 ## What can it do?
 
-**43 read-only tools** are available today (Phase 0–7, v1 complete — 17 domains). 59 write tools (create/update/delete across clients, projects, tasks, tags, time entries, holidays, expenses, and expense categories, plus time-off policy/request management, approval submit/resubmit/update, custom-field create/update/delete and project assignment, scheduling assignment management, invoice and payment management, and webhook create/update/delete/token) register when you set `CLOCKIFY_ACCESS_MODE=full` (or the back-compat `CLOCKIFY_ENABLE_WRITES=true`). A middle `time-tracking` mode exposes only the time-entry writes for logging hours — see [Access modes](#configuration).
+**48 read-only tools** are available today (Phase 0–8b — 18 domains). 64 write tools (create/update/delete across clients, projects, tasks, tags, time entries, holidays, expenses, and expense categories, plus time-off policy/request management, approval submit/resubmit/update, custom-field create/update/delete and project assignment, scheduling assignment management, invoice and payment management, shared-report management, and webhook create/update/delete/token) register when you set `CLOCKIFY_ACCESS_MODE=full` (or the back-compat `CLOCKIFY_ENABLE_WRITES=true`). A middle `time-tracking` mode exposes only the time-entry writes for logging hours — see [Access modes](#configuration).
 
 | Domain | Tools | Tool names |
 |--------|------:|------------|
@@ -18,7 +18,8 @@ Expose Clockify workspaces, users, groups, clients, projects, tasks, tags, time 
 | **Tasks** | 2 | `list_tasks`, `get_task` |
 | **Tags** | 2 | `list_tags`, `get_tag` |
 | **Time entries** | 2 | `list_time_entries`, `get_time_entry` |
-| **Reports** | 3 | `generate_detailed_report`, `generate_summary_report`, `generate_weekly_report` |
+| **Reports** | 6 | `generate_detailed_report`, `generate_summary_report`, `generate_weekly_report`, `generate_attendance_report`‡, `generate_expense_report`‡, `export_report` (PDF/CSV/XLSX to a file) |
+| **Shared reports** | 2 | `list_shared_reports`, `get_shared_report` |
 | **Time off**† | 5 | `list_time_off_policies`, `get_time_off_policy`, `list_time_off_balances_by_policy`, `list_time_off_balances_by_user`, `list_time_off_requests` |
 | **Holidays**† | 2 | `list_holidays`, `list_holidays_in_period` |
 | **Expenses**† | 4 | `list_expenses`, `get_expense`, `list_expense_categories`, `download_expense_receipt` |
@@ -29,6 +30,7 @@ Expose Clockify workspaces, users, groups, clients, projects, tasks, tags, time 
 | **Webhooks**† | 3 | `list_webhooks`, `get_webhook`, `get_webhook_logs` |
 
 † **Time off**, **Holidays**, **Expenses**, **Approvals**, **Custom fields**, **Scheduling**, **Invoices**, and **Webhooks** are paid Clockify features — these tools error (HTTP 402/403/404) on plans without them.
+‡ `generate_attendance_report` and `generate_expense_report` (and `export_report` for those two types) need the workspace's attendance/Expenses add-ons; the time-based reports (detailed/summary/weekly) and shared reports work on the free plan.
 
 **Write tools** (opt-in — set `CLOCKIFY_ENABLE_WRITES=true`):
 
@@ -38,7 +40,8 @@ Expose Clockify workspaces, users, groups, clients, projects, tasks, tags, time 
 | **Projects** | 3 | `create_project`, `update_project`, `delete_project` |
 | **Tasks** | 3 | `create_task`, `update_task`, `delete_task` |
 | **Tags** | 3 | `create_tag`, `update_tag`, `delete_tag` |
-| **Time entries** | 5 | `create_time_entry`, `update_time_entry`, `delete_time_entry`, `duplicate_time_entry`, `bulk_update_time_entries` |
+| **Time entries** | 7 | `create_time_entry`, `update_time_entry`, `delete_time_entry`, `duplicate_time_entry`, `bulk_update_time_entries`, `create_time_entry_for_user`, `stop_running_timer` |
+| **Shared reports** | 3 | `create_shared_report`, `update_shared_report`, `delete_shared_report` |
 | **Time off**† | 5 | `create_time_off_policy`, `create_time_off_request`, `approve_time_off_request`, `reject_time_off_request`, `withdraw_time_off_request` |
 | **Holidays**† | 3 | `create_holiday`, `update_holiday`, `delete_holiday` |
 | **Expenses**† | 7 | `create_expense`, `update_expense`, `delete_expense`, `create_expense_category`, `update_expense_category`, `delete_expense_category`, `archive_expense_category` |
@@ -123,7 +126,8 @@ api_key = "your-clockify-api-key"
 - **Auth:** Clockify uses a single API key sent as the `X-Api-Key` HTTP header. No OAuth. Get your key from **Profile Settings → API** in the Clockify web app.
 - **Regions:** By default the server targets `https://api.clockify.me/api/v1`. Set `CLOCKIFY_REGION` to route to a regional endpoint (e.g. `euc1` → `https://euc1.clockify.me/api/v1`). For custom subdomain workspaces use `CLOCKIFY_BASE_URL`.
 - **Workspace scope:** Almost every Clockify operation is scoped to a workspace (`/workspaces/{workspaceId}/...`). Tools accept an optional `workspace_id`; when omitted they fall back to `CLOCKIFY_DEFAULT_WORKSPACE_ID`. If neither is set, the tool asks you to resolve one first via `list_workspaces`.
-- **Read-only by default:** The 43 read tools are always available. Set `CLOCKIFY_ACCESS_MODE=time-tracking` to additionally register the 5 time-entry write tools, or `CLOCKIFY_ACCESS_MODE=full` (equivalent: `CLOCKIFY_ENABLE_WRITES=true`) to register all 59 write tools; `delete_*` tools and `withdraw_time_off_request` are irreversible.
+- **Read-only by default:** The 48 read tools are always available. Set `CLOCKIFY_ACCESS_MODE=time-tracking` to additionally register the 5 time-entry write tools, or `CLOCKIFY_ACCESS_MODE=full` (equivalent: `CLOCKIFY_ENABLE_WRITES=true`) to register all 64 write tools; `delete_*` tools and `withdraw_time_off_request` are irreversible.
+- **Pagination:** list tools take optional `page`/`page_size` and return one page. The high-volume lists (`list_time_entries`, `list_projects`, `list_clients`, `list_tasks`, `list_tags`, `list_users`) also accept `fetch_all=true` to follow pagination and return every page concatenated (may make several API calls).
 - **Paid features:** Several domains need a paid plan **and** an admin to enable the module in Workspace Settings — see [Paid features & enabling them](#paid-features--enabling-them-in-clockify). The server's error categories tell you which is missing.
 
 ## Paid features & enabling them in Clockify
@@ -134,10 +138,11 @@ Many domains are gated by **two** independent things — both must be true for t
 
 | Feature | Minimum plan |
 |---------|--------------|
-| Reports (detailed/summary/weekly) | Free |
+| Reports (detailed/summary/weekly), Shared reports | Free |
 | Webhooks | Free (up to 3) — paid for more |
 | Time off, Holidays, Invoices, Approvals | Standard |
-| Expenses, Custom fields, Scheduling | Pro |
+| Expenses (incl. expense report), Custom fields, Scheduling | Pro |
+| Attendance report | Pro (attendance/time-tracking add-on) |
 
 **2. The module must be enabled in the workspace.** Even on the right plan, an admin must turn these on in Clockify → **Workspace Settings**: **Time off, Expenses, Approval, Invoicing, Scheduling**. Until enabled, the API returns `403 "Access Denied"` and the server raises `ClockifyAPIError` with category `ACCESS_DENIED`. (Custom fields, webhooks, and reports need no separate toggle.)
 
