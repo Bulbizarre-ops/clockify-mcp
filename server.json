@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.tracegazer/clockify-mcp",
   "title": "Clockify Time Tracking",
-  "description": "Full-coverage Clockify MCP server — 117 tools across 18 domains (incl. invoices, scheduling, time-off & approvals), native OpenTelemetry observability, and a 3-tier read/time-tracking/full access model.",
+  "description": "Clockify time-tracking MCP: 117 tools across 18 domains, read-only by default with opt-in writes.",
   "repository": {
     "url": "https://github.com/tracegazer/clockify-mcp",
     "source": "github"
