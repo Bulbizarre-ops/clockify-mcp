@@ -12,7 +12,7 @@ jobs:
     permissions:
       id-token: write  # OIDC for MCP Registry auth (io.github.* namespace)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install mcp-publisher
         env:
           GH_TOKEN: ${{ github.token }}
