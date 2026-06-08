@@ -65,6 +65,8 @@ Pushing a `v*` tag triggers the **Release** workflow, which:
    `ghcr.io/tracegazer/clockify-mcp` (`:X.Y.Z`, `:X.Y`, `:latest`).
 4. Creates a GitHub release with the artifacts.
 5. Publishes the manifest to the official **MCP Registry**.
+6. Builds the `.mcpb` bundle and publishes it to **Smithery** (only if the
+   `SMITHERY_API_KEY` repo secret is set — otherwise the step warns and skips).
 
 The registry step stamps `server.json` with the tag version automatically — both
 the top-level `version` and the PyPI/OCI package versions (including the image
@@ -80,3 +82,13 @@ package, and must match `name` in `server.json`.
 > (PyPI → project → Publishing) pointing at owner `tracegazer`, repo
 > `clockify-mcp`, workflow `release.yml`, environment `pypi`. For the very first
 > upload, use PyPI's "pending publisher" form.
+
+> One-time setup for Smithery (optional): mint a service token with
+> `smithery auth login` then `smithery auth token`, and store it as the
+> `SMITHERY_API_KEY` repo secret. The namespace `tracegazer/clockify-mcp` must be
+> one you own (`smithery namespace list`). Without the secret, the release still
+> succeeds and the Smithery step is skipped.
+
+> One-time setup for GHCR: after the first release pushes the image, set the
+> `clockify-mcp` package visibility to **Public** (GitHub → Packages → package
+> settings) so the MCP Registry can read its ownership label.

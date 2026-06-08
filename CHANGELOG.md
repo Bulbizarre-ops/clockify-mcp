@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multi-arch Docker image (`linux/amd64`, `linux/arm64`) published to
   `ghcr.io/tracegazer/clockify-mcp` on every release, and exposed as an `oci`
   package in `server.json` so container users are discoverable via the registry.
+- Release workflow publishes the `.mcpb` bundle to Smithery on each tag
+  (gated on a `SMITHERY_API_KEY` secret; skipped with a warning if unset).
 - Dependabot configuration for Python deps and GitHub Actions.
 - `SECURITY.md`, `CONTRIBUTING.md`, issue/PR templates.
 

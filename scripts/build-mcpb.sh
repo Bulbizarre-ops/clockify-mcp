@@ -3,7 +3,8 @@
 #
 # The version is taken from pyproject.toml at build time, so the bundle always
 # matches the released package — there is no version to maintain in the manifest.
-# Publish with:  smithery mcp publish ./clockify-mcp.mcpb -n tracegazer-dev/clockify-mcp
+# Publish with:  smithery mcp publish ./clockify-mcp.mcpb -n tracegazer/clockify-mcp
+# (CI does this automatically on a release tag — see .github/workflows/release.yml)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

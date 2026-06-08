@@ -143,3 +143,25 @@ jobs:
         run: ./mcp-publisher login github-oidc
       - name: Publish to the MCP Registry
         run: ./mcp-publisher publish
+
+  smithery-publish:
+    needs: pypi-publish  # the .mcpb points at `uvx clockify-mcp`, so PyPI must be live first
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build MCPB bundle and publish to Smithery
+        env:
+          SMITHERY_API_KEY: ${{ secrets.SMITHERY_API_KEY }}
+        run: |
+          if [ -z "$SMITHERY_API_KEY" ]; then
+            echo "::warning::SMITHERY_API_KEY secret not set — skipping Smithery publish"
+            exit 0
+          fi
+          bash scripts/build-mcpb.sh
+          npx -y smithery@latest mcp publish ./clockify-mcp.mcpb -n tracegazer/clockify-mcp
