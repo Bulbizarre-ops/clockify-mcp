@@ -33,7 +33,7 @@ jobs:
           path: dist/
       - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "24"
       - name: Build MCPB bundle
         run: bash scripts/build-mcpb.sh
       - name: Upload MCPB bundle
@@ -166,7 +166,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "24"
       - name: Download MCPB bundle
         uses: actions/download-artifact@v8
         with:

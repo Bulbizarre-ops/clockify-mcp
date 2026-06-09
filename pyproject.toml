@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "clockify-mcp"
-version = "0.3.1"
+version = "0.3.2"
 description = "Full-coverage Clockify MCP — 112 tools across 18 domains (incl. invoices, scheduling, time-off & approvals), native OpenTelemetry observability, and a 3-tier read/time-tracking/full access model."
 readme = "README.md"
 requires-python = ">=3.12"

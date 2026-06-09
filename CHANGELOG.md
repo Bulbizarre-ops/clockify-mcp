@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-06-09
+
+### Changed
+- CI workflows now use Node.js 24 (was 20) for the MCP Registry and Smithery
+  publish steps, matching the `mcp_invgate` pipeline.
+- `pyproject` (and the GitHub repo About / PyPI summary) now carry the full
+  marketing description: "Full-coverage Clockify MCP — 112 tools across 18
+  domains (incl. invoices, scheduling, time-off & approvals), native
+  OpenTelemetry observability, and a 3-tier read/time-tracking/full access
+  model." (`server.json` keeps the short ≤100-char line required by the registry.)
+
 ## [0.3.1] - 2026-06-08
 
 ### Fixed
@@ -68,7 +79,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release: read tools across core Clockify domains, opt-in write tools
   gated by `CLOCKIFY_ACCESS_MODE`, and optional OpenTelemetry observability.
 
-[Unreleased]: https://github.com/tracegazer/clockify-mcp/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/tracegazer/clockify-mcp/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/tracegazer/clockify-mcp/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/tracegazer/clockify-mcp/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/tracegazer/clockify-mcp/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/tracegazer/clockify-mcp/compare/v0.2.1...v0.2.2
