@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Annotated, Any
+
+from pydantic import Field
 
 from ..bodies import drop_none
 from ..client import ClockifyClient
@@ -11,6 +13,94 @@ from .workspaces import resolve_workspace_id
 
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
+
+
+# --- Parameter descriptions (surfaced to MCP clients via the tool input schema) ---
+_DateRangeStart = Annotated[
+    str,
+    Field(
+        description="Required start of the report window, an ISO-8601 datetime with "
+        "offset (e.g. 2021-01-01T00:00:00Z)."
+    ),
+]
+_DateRangeEnd = Annotated[
+    str,
+    Field(
+        description="Required end of the report window, an ISO-8601 datetime with "
+        "offset (e.g. 2021-01-31T23:59:59Z)."
+    ),
+]
+_WorkspaceId = Annotated[
+    str | None,
+    Field(description="Workspace id; omit to use the configured default_workspace_id."),
+]
+_Page = Annotated[
+    int | None,
+    Field(description="1-based page number for large date ranges."),
+]
+_PageSize = Annotated[
+    int | None,
+    Field(description="Number of rows per page for large date ranges."),
+]
+_DetailedSortColumn = Annotated[
+    str | None,
+    Field(
+        description="Sort column: ID, DESCRIPTION, USER, DURATION, DATE, ZONED_DATE, "
+        "NATURAL, or USER_DATE."
+    ),
+]
+_SummaryGroups = Annotated[
+    list[str] | None,
+    Field(
+        description="Grouping keys applied in order (PROJECT, CLIENT, USER, TASK, TAG, "
+        "DATE); defaults to ['PROJECT']."
+    ),
+]
+_SummarySortColumn = Annotated[
+    str | None,
+    Field(description="Sort column: GROUP, DURATION, AMOUNT, EARNED, COST, or PROFIT."),
+]
+_WeeklyGroup = Annotated[
+    str | None,
+    Field(description="Primary breakdown key; defaults to USER when omitted."),
+]
+_WeeklySubgroup = Annotated[
+    str | None,
+    Field(description="Secondary breakdown key; defaults to TIME when omitted."),
+]
+_AttendanceSortColumn = Annotated[
+    str | None,
+    Field(
+        description="Sort column: USER, DATE, START, END, BREAK, WORK, CAPACITY, "
+        "OVERTIME, or TIME_OFF."
+    ),
+]
+_HasTimeOff = Annotated[
+    bool | None,
+    Field(description="When true, restrict rows to users/days that include time off."),
+]
+_ExpenseSortColumn = Annotated[
+    str | None,
+    Field(description="Sort column: ID, PROJECT, USER, CATEGORY, DATE, or AMOUNT."),
+]
+_Billable = Annotated[
+    bool | None,
+    Field(description="When set, filter expenses by billable (true) or non-billable (false)."),
+]
+_ReportType = Annotated[
+    str,
+    Field(
+        description="Report to export: detailed, summary, weekly, attendance, or expenses."
+    ),
+]
+_ExportFormat = Annotated[
+    str,
+    Field(description="Output file format: PDF, CSV, or XLSX."),
+]
+_SavePath = Annotated[
+    str,
+    Field(description="Local filesystem path the exported report bytes are written to."),
+]
 
 
 async def generate_detailed_report(
@@ -209,14 +299,22 @@ async def export_report(
 def register(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def generate_detailed_report(
-        date_range_start: str,
-        date_range_end: str,
-        workspace_id: str | None = None,
-        page: int | None = None,
-        page_size: int | None = None,
-        sort_column: str | None = None,
+        date_range_start: _DateRangeStart,
+        date_range_end: _DateRangeEnd,
+        workspace_id: _WorkspaceId = None,
+        page: _Page = None,
+        page_size: _PageSize = None,
+        sort_column: _DetailedSortColumn = None,
     ) -> Any:
-        """Generate a detailed report (one row per time entry) for a date range."""
+        """Generate a detailed report with one row per time entry over a date range.
+
+        Read/generate-only; POSTs a filter body to the Reports host and REQUIRES the
+        date_range_start/date_range_end window (ISO-8601 datetimes). Scoped to the given
+        workspace (or the default). Use page/page_size for large ranges. This is the
+        per-entry view; use generate_summary_report for grouped totals or
+        generate_weekly_report for a weekly breakdown. Returns the report JSON with the
+        per-entry rows and totals; for a downloadable file use export_report.
+        """
         return await generate_detailed_report_fn(
             client,
             date_range_start=date_range_start,
@@ -229,13 +327,21 @@ def register(mcp: FastMCP, client: ClockifyClient) -> None:
 
     @mcp.tool()
     async def generate_summary_report(
-        date_range_start: str,
-        date_range_end: str,
-        workspace_id: str | None = None,
-        groups: list[str] | None = None,
-        sort_column: str | None = None,
+        date_range_start: _DateRangeStart,
+        date_range_end: _DateRangeEnd,
+        workspace_id: _WorkspaceId = None,
+        groups: _SummaryGroups = None,
+        sort_column: _SummarySortColumn = None,
     ) -> Any:
-        """Generate a summary report (totals grouped by one or more keys) for a date range."""
+        """Generate a summary report of totals grouped by one or more keys over a date range.
+
+        Read/generate-only; POSTs a filter body to the Reports host and REQUIRES the
+        date_range_start/date_range_end window (ISO-8601 datetimes). Scoped to the given
+        workspace (or the default). groups are the grouping keys applied in order (e.g.
+        PROJECT, CLIENT, USER, TASK, TAG, DATE) and default to ['PROJECT']. Unlike
+        generate_detailed_report (one row per entry), this returns aggregated totals per
+        group. For a downloadable file use export_report.
+        """
         return await generate_summary_report_fn(
             client,
             date_range_start=date_range_start,
@@ -247,13 +353,21 @@ def register(mcp: FastMCP, client: ClockifyClient) -> None:
 
     @mcp.tool()
     async def generate_weekly_report(
-        date_range_start: str,
-        date_range_end: str,
-        workspace_id: str | None = None,
-        group: str | None = None,
-        subgroup: str | None = None,
+        date_range_start: _DateRangeStart,
+        date_range_end: _DateRangeEnd,
+        workspace_id: _WorkspaceId = None,
+        group: _WeeklyGroup = None,
+        subgroup: _WeeklySubgroup = None,
     ) -> Any:
-        """Generate a weekly report for a date range."""
+        """Generate a weekly report breaking time down per week over a date range.
+
+        Read/generate-only; POSTs a filter body to the Reports host and REQUIRES the
+        date_range_start/date_range_end window (ISO-8601 datetimes). Scoped to the given
+        workspace (or the default). group/subgroup control the breakdown and default to
+        USER and TIME respectively. Use this for a week-by-week view; use
+        generate_summary_report for arbitrary grouped totals. For a downloadable file use
+        export_report.
+        """
         return await generate_weekly_report_fn(
             client,
             date_range_start=date_range_start,
@@ -265,16 +379,24 @@ def register(mcp: FastMCP, client: ClockifyClient) -> None:
 
     @mcp.tool()
     async def generate_attendance_report(
-        date_range_start: str,
-        date_range_end: str,
-        workspace_id: str | None = None,
-        page: int | None = None,
-        page_size: int | None = None,
-        sort_column: str | None = None,
-        has_time_off: bool | None = None,
+        date_range_start: _DateRangeStart,
+        date_range_end: _DateRangeEnd,
+        workspace_id: _WorkspaceId = None,
+        page: _Page = None,
+        page_size: _PageSize = None,
+        sort_column: _AttendanceSortColumn = None,
+        has_time_off: _HasTimeOff = None,
     ) -> Any:
-        """Generate an attendance report (per user/day: work, break, capacity, overtime,
-        time off) for a date range. Requires the attendance/time-tracking add-on."""
+        """Generate an attendance report of per user/day clock-in/out, work, break,
+        capacity, overtime, and time off over a date range.
+
+        Read/generate-only; POSTs a filter body to the Reports host and REQUIRES the
+        date_range_start/date_range_end window (ISO-8601 datetimes). Requires the
+        workspace's attendance/time-tracking add-on. Scoped to the given workspace (or the
+        default). Use page/page_size for large ranges and has_time_off to restrict to rows
+        that include time off. Unlike the duration-focused summary/detailed reports, this
+        surfaces clock-in/out and capacity/overtime per user-day. Returns the report JSON.
+        """
         return await generate_attendance_report_fn(
             client,
             date_range_start=date_range_start,
@@ -288,16 +410,24 @@ def register(mcp: FastMCP, client: ClockifyClient) -> None:
 
     @mcp.tool()
     async def generate_expense_report(
-        date_range_start: str,
-        date_range_end: str,
-        workspace_id: str | None = None,
-        page: int | None = None,
-        page_size: int | None = None,
-        sort_column: str | None = None,
-        billable: bool | None = None,
+        date_range_start: _DateRangeStart,
+        date_range_end: _DateRangeEnd,
+        workspace_id: _WorkspaceId = None,
+        page: _Page = None,
+        page_size: _PageSize = None,
+        sort_column: _ExpenseSortColumn = None,
+        billable: _Billable = None,
     ) -> Any:
-        """Generate a detailed expense report ({"expenses": [...], "totals": {...}}) for a
-        date range. Requires the Expenses add-on."""
+        """Generate a detailed expense report over a date range.
+
+        Read/generate-only; POSTs a filter body to the Reports host and REQUIRES the
+        date_range_start/date_range_end window (ISO-8601 datetimes). Requires the
+        workspace's Expenses add-on. Scoped to the given workspace (or the default). Use
+        page/page_size for large ranges and billable to filter by billable status. This is
+        the expenses counterpart to the time-based reports; returns
+        {"expenses": [...], "totals": {...}}. For a downloadable file use export_report
+        with report_type='expenses'.
+        """
         return await generate_expense_report_fn(
             client,
             date_range_start=date_range_start,
@@ -311,15 +441,23 @@ def register(mcp: FastMCP, client: ClockifyClient) -> None:
 
     @mcp.tool()
     async def export_report(
-        report_type: str,
-        fmt: str,
-        save_path: str,
-        date_range_start: str,
-        date_range_end: str,
-        workspace_id: str | None = None,
+        report_type: _ReportType,
+        fmt: _ExportFormat,
+        save_path: _SavePath,
+        date_range_start: _DateRangeStart,
+        date_range_end: _DateRangeEnd,
+        workspace_id: _WorkspaceId = None,
     ) -> Any:
-        """Export a report as a file (PDF/CSV/XLSX). report_type is detailed/summary/
-        weekly/attendance/expenses; fmt is PDF/CSV/XLSX; bytes are written to save_path."""
+        """Export a report as a binary file (PDF/CSV/XLSX) and write it to save_path.
+
+        Read/generate-only; POSTs a filter body to the Reports host and REQUIRES the
+        date_range_start/date_range_end window (ISO-8601 datetimes). Scoped to the given
+        workspace (or the default). report_type is one of detailed, summary, weekly,
+        attendance, or expenses; fmt is PDF, CSV, or XLSX. The file I/O writes the report
+        bytes to save_path and returns {"path", "bytes", "format"} (the file content is
+        kept out of the model context). Uses sensible default grouping per report type; for
+        fine-grained in-context JSON use the matching generate_*_report tool instead.
+        """
         return await export_report_fn(
             client,
             report_type=report_type,

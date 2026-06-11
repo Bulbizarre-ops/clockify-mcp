@@ -8,7 +8,9 @@ host (not the regular host): list/create/update/delete are workspace-scoped unde
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Annotated, Any
+
+from pydantic import Field
 
 from ..bodies import drop_none
 from ..client import ClockifyClient
@@ -27,6 +29,93 @@ _SHARED_REPORT_DEFAULT_FILTER: dict[str, dict[str, Any]] = {
     "WEEKLY": {"weeklyFilter": {"group": "USER", "subgroup": "TIME"}},
     "ATTENDANCE": {"attendanceFilter": {}},
 }
+
+
+# --- Parameter descriptions (surfaced to MCP clients via the tool input schema) ---
+_WorkspaceId = Annotated[
+    str | None,
+    Field(description="Workspace id; omit to use the configured default_workspace_id."),
+]
+_SharedReportId = Annotated[
+    str,
+    Field(description="Id of the shared report (opaque string returned by list_shared_reports)."),
+]
+_SharedReportsFilter = Annotated[
+    str | None,
+    Field(description="Scope of reports to list: ALL (default), CREATED_BY_ME, or SHARED_WITH_ME."),
+]
+_DateRangeStartOpt = Annotated[
+    str | None,
+    Field(description="ISO-8601 start of the range; overrides the saved report's range when set."),
+]
+_DateRangeEndOpt = Annotated[
+    str | None,
+    Field(description="ISO-8601 end of the range; overrides the saved report's range when set."),
+]
+_SortColumn = Annotated[
+    str | None,
+    Field(description="Column to sort the generated report by; overrides the saved sort."),
+]
+_SortOrder = Annotated[
+    str | None,
+    Field(description="Sort direction: ASCENDING or DESCENDING; overrides the saved sort."),
+]
+_ExportType = Annotated[
+    str | None,
+    Field(description="Output format: JSON (default), PDF, CSV, XLSX, or ZIP."),
+]
+_Page = Annotated[
+    int | None,
+    Field(description="1-based page number for the paginated results."),
+]
+_PageSize = Annotated[
+    int | None,
+    Field(description="Number of results per page."),
+]
+_ReportName = Annotated[
+    str,
+    Field(description="Display name for the shared report."),
+]
+_ReportType = Annotated[
+    str,
+    Field(
+        description="Report kind: DETAILED, WEEKLY, SUMMARY, EXPENSE_DETAILED, ATTENDANCE, "
+        "etc. (see the Clockify docs). Fixed at creation."
+    ),
+]
+_DateRangeStart = Annotated[
+    str,
+    Field(description="ISO-8601 start of the report's date range (required by the filter)."),
+]
+_DateRangeEnd = Annotated[
+    str,
+    Field(description="ISO-8601 end of the report's date range (required by the filter)."),
+]
+_IsPublic = Annotated[
+    bool | None,
+    Field(description="When true, the report is accessible without sign-in; otherwise restricted."),
+]
+_FixedDate = Annotated[
+    bool | None,
+    Field(
+        description="When true, pin the report to its saved date range rather than a relative one."
+    ),
+]
+_VisibleToUsers = Annotated[
+    list[str] | None,
+    Field(description="User ids allowed to view the report when it is not public."),
+]
+_VisibleToUserGroups = Annotated[
+    list[str] | None,
+    Field(description="User-group ids allowed to view the report when it is not public."),
+]
+_ReportFilter = Annotated[
+    dict[str, Any] | None,
+    Field(
+        description="Filter overrides merged into the report's filter; use for non-default "
+        "types or to customize grouping (overrides the type's default sub-filter)."
+    ),
+]
 
 
 async def list_shared_reports(
@@ -169,13 +258,18 @@ async def delete_shared_report(
 def register(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def list_shared_reports(
-        workspace_id: str | None = None,
-        page: int | None = None,
-        page_size: int | None = None,
-        shared_reports_filter: str | None = None,
+        workspace_id: _WorkspaceId = None,
+        page: _Page = None,
+        page_size: _PageSize = None,
+        shared_reports_filter: _SharedReportsFilter = None,
     ) -> Any:
-        """List the workspace's shared reports. shared_reports_filter is ALL (default),
-        CREATED_BY_ME, or SHARED_WITH_ME."""
+        """List the workspace's saved shared-report definitions to discover their ids.
+
+        Read-only. Workspace-scoped (falls back to the configured default workspace) and
+        served from the Reports API host. Results are paginated via page/page_size.
+        Narrow the listing with shared_reports_filter: ALL (default), CREATED_BY_ME, or
+        SHARED_WITH_ME. Returns the saved report metadata, not generated report data —
+        use get_shared_report to generate (fetch the data of) a known id."""
         return await list_shared_reports_fn(
             client,
             workspace_id=workspace_id,
@@ -186,17 +280,25 @@ def register(mcp: FastMCP, client: ClockifyClient) -> None:
 
     @mcp.tool()
     async def get_shared_report(
-        shared_report_id: str,
-        date_range_start: str | None = None,
-        date_range_end: str | None = None,
-        sort_column: str | None = None,
-        sort_order: str | None = None,
-        export_type: str | None = None,
-        page: int | None = None,
-        page_size: int | None = None,
+        shared_report_id: _SharedReportId,
+        date_range_start: _DateRangeStartOpt = None,
+        date_range_end: _DateRangeEndOpt = None,
+        sort_column: _SortColumn = None,
+        sort_order: _SortOrder = None,
+        export_type: _ExportType = None,
+        page: _Page = None,
+        page_size: _PageSize = None,
     ) -> Any:
-        """Generate (fetch the data of) a shared report by id. Optional params override
-        the saved range/sort/format; export_type is JSON/PDF/CSV/XLSX/ZIP."""
+        """Generate (fetch the data of) a single saved shared report by its id.
+
+        Read-only. Unlike list_shared_reports (which returns saved definitions), this runs
+        the report and returns its data. This endpoint is NOT workspace-scoped — it takes
+        only the report id (still authenticated with the API key) and is served from the
+        Reports API host. Optional params override the saved range (date_range_start/end),
+        sort (sort_column/sort_order), and format (export_type: JSON default, PDF, CSV,
+        XLSX, ZIP); results are paginated via page/page_size. The returned shape depends on
+        the report's type and export_type (passthrough JSON). Use list_shared_reports to
+        discover ids first."""
         return await get_shared_report_fn(
             client,
             shared_report_id=shared_report_id,
@@ -216,22 +318,28 @@ def register(mcp: FastMCP, client: ClockifyClient) -> None:
 def _register_writes(mcp: FastMCP, client: ClockifyClient) -> None:
     @mcp.tool()
     async def create_shared_report(
-        name: str,
-        type: str,
-        date_range_start: str,
-        date_range_end: str,
-        workspace_id: str | None = None,
-        is_public: bool | None = None,
-        fixed_date: bool | None = None,
-        visible_to_users: list[str] | None = None,
-        visible_to_user_groups: list[str] | None = None,
-        report_filter: dict[str, Any] | None = None,
+        name: _ReportName,
+        type: _ReportType,
+        date_range_start: _DateRangeStart,
+        date_range_end: _DateRangeEnd,
+        workspace_id: _WorkspaceId = None,
+        is_public: _IsPublic = None,
+        fixed_date: _FixedDate = None,
+        visible_to_users: _VisibleToUsers = None,
+        visible_to_user_groups: _VisibleToUserGroups = None,
+        report_filter: _ReportFilter = None,
     ) -> Any:
-        """Create a shared report. type is DETAILED/WEEKLY/SUMMARY/EXPENSE_DETAILED/
-        ATTENDANCE/etc.; the filter needs a date range and the type's sub-filter (a
-        default is added for DETAILED/SUMMARY/WEEKLY/ATTENDANCE; pass report_filter to
-        customize or for other types). is_public=True shares it publicly; otherwise
-        scope with visible_to_users / visible_to_user_groups."""
+        """Create (save) a new shared-report definition.
+
+        Write operation. Workspace-scoped (falls back to the configured default workspace)
+        and served from the Reports API host. type is DETAILED/WEEKLY/SUMMARY/
+        EXPENSE_DETAILED/ATTENDANCE/etc.; the filter needs a date range
+        (date_range_start/end, ISO-8601) AND the sub-filter for its type (a sensible
+        default is added for DETAILED/SUMMARY/WEEKLY/ATTENDANCE — pass report_filter to
+        customize grouping or for other types). is_public=True shares it publicly;
+        otherwise scope with visible_to_users / visible_to_user_groups. Returns the created
+        report. To change an existing report use update_shared_report (note type and filter
+        cannot be changed afterwards)."""
         return await create_shared_report_fn(
             client,
             name=name,
@@ -248,16 +356,21 @@ def _register_writes(mcp: FastMCP, client: ClockifyClient) -> None:
 
     @mcp.tool()
     async def update_shared_report(
-        shared_report_id: str,
-        name: str,
-        workspace_id: str | None = None,
-        is_public: bool | None = None,
-        fixed_date: bool | None = None,
-        visible_to_users: list[str] | None = None,
-        visible_to_user_groups: list[str] | None = None,
+        shared_report_id: _SharedReportId,
+        name: _ReportName,
+        workspace_id: _WorkspaceId = None,
+        is_public: _IsPublic = None,
+        fixed_date: _FixedDate = None,
+        visible_to_users: _VisibleToUsers = None,
+        visible_to_user_groups: _VisibleToUserGroups = None,
     ) -> Any:
-        """Update a shared report's metadata/visibility (name required). type and filter
-        are fixed at creation — delete and recreate to change them."""
+        """Update an existing shared report's metadata and visibility.
+
+        Write operation. Workspace-scoped (falls back to the configured default workspace)
+        and served from the Reports API host. Only name (required by the API), is_public,
+        fixed_date, and visibility (visible_to_users / visible_to_user_groups) can be
+        changed — the report's type and filter are fixed at creation, so delete and
+        recreate with create_shared_report to change them. Returns the updated report."""
         return await update_shared_report_fn(
             client,
             shared_report_id=shared_report_id,
@@ -271,10 +384,13 @@ def _register_writes(mcp: FastMCP, client: ClockifyClient) -> None:
 
     @mcp.tool()
     async def delete_shared_report(
-        shared_report_id: str, workspace_id: str | None = None
+        shared_report_id: _SharedReportId, workspace_id: _WorkspaceId = None
     ) -> Any:
-        """Delete a shared report. IRREVERSIBLE — the saved report and share link are
-        permanently removed."""
+        """Delete a saved shared report by its id.
+
+        Write operation. IRREVERSIBLE — the saved report and its share link are permanently
+        removed. Workspace-scoped (falls back to the configured default workspace) and
+        served from the Reports API host. Use list_shared_reports to find the id first."""
         return await delete_shared_report_fn(
             client, shared_report_id=shared_report_id, workspace_id=workspace_id
         )
