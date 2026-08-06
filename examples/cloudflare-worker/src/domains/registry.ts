@@ -52,7 +52,7 @@ export const WAVE1_TOOLS: ToolDefinition[] = [
     tier: "full",
     wave: 2,
     description:
-      "Backup completed time entries from a source workspace into a dedicated destination workspace (projects/tags matched by name).",
+      "Backup completed time entries into a dedicated workspace (idempotent: skips duplicates via [clk-backup:id] marker / fingerprint). Pass destination_workspace_id or destination_workspace_name.",
   },
 ];
 

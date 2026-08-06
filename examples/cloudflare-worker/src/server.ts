@@ -249,7 +249,22 @@ const SCHEMAS: SchemaMap = {
   backup_time_entries: {
     destination_workspace_id: z
       .string()
-      .describe("Dedicated Clockify workspace that receives the backup copy."),
+      .optional()
+      .describe(
+        "Existing dedicated backup workspace id. Omit if using destination_workspace_name.",
+      ),
+    destination_workspace_name: z
+      .string()
+      .optional()
+      .describe(
+        "Backup workspace name: reuse if it exists, otherwise create it (POST /workspaces with Cake organizationId).",
+      ),
+    organization_id: z
+      .string()
+      .optional()
+      .describe(
+        "Cake organization id required by Clockify when creating a workspace. Defaults to source workspace cakeOrganizationId.",
+      ),
     source_workspace_id: workspaceId.describe(
       "Workspace to read from; omit to use X-Clockify-Workspace-Id / default.",
     ),
@@ -269,6 +284,12 @@ const SCHEMAS: SchemaMap = {
       .boolean()
       .optional()
       .describe("When true, report what would be copied without writing."),
+    force: z
+      .boolean()
+      .optional()
+      .describe(
+        "When true, skip idempotence checks and re-copy even if the destination already has matching entries.",
+      ),
   },
 };
 
