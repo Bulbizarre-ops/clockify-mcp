@@ -10,6 +10,9 @@ import type { ClockifyAuthProps } from "./oauth/types.js";
 
 type WorkerEnv = Env & { OAUTH_PROVIDER: OAuthHelpers };
 
+/** Canonical MCP resource (RFC 8707) — must match Claude connector registration. */
+const MCP_RESOURCE = "https://clockify-mcp.aymeric-veyron.workers.dev/mcp";
+
 /**
  * Resolve a raw Clockify API key sent as Bearer (desktop BYO),
  * when it is not a provider-issued OAuth access token.
@@ -22,7 +25,7 @@ async function resolveExternalToken({
   token: string;
   request: Request;
   env: WorkerEnv;
-}): Promise<{ props: ClockifyAuthProps } | null> {
+}): Promise<{ props: ClockifyAuthProps; audience: string } | null> {
   const apiKey = token.trim();
   if (!apiKey || apiKey.length < 8) return null;
 
@@ -40,7 +43,9 @@ async function resolveExternalToken({
     workspaceId:
       request.headers.get("X-Clockify-Workspace-Id")?.trim() || undefined,
   };
-  return { props };
+  // workers-oauth-provider requires audience to match resourceMetadata.resource
+  // when that field is pinned (RFC 8707).
+  return { props, audience: MCP_RESOURCE };
 }
 
 export default new OAuthProvider<WorkerEnv>({
@@ -56,7 +61,7 @@ export default new OAuthProvider<WorkerEnv>({
   clientRegistrationEndpoint: "/oauth/register",
   // Pin RFC 8707 resource / aud to the MCP endpoint Claude registers.
   resourceMetadata: {
-    resource: "https://clockify-mcp.aymeric-veyron.workers.dev/mcp",
+    resource: MCP_RESOURCE,
     resource_name: "Clockify MCP",
     scopes_supported: ["read", "time-tracking", "full"],
   },
