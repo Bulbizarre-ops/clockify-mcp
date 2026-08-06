@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { propsFromConsentForm } from "../src/oauth/auth-handler.js";
+import {
+  decodeOAuthState,
+  encodeOAuthState,
+} from "../src/oauth/pages.js";
 import { escapeHtml, isHttpUrl } from "../src/oauth/types.js";
 
 describe("escapeHtml", () => {
@@ -14,6 +18,22 @@ describe("isHttpUrl", () => {
   it("allows http(s) only", () => {
     expect(isHttpUrl("https://claude.ai")).toBe(true);
     expect(isHttpUrl("javascript:alert(1)")).toBe(false);
+  });
+});
+
+describe("oauth state codec", () => {
+  it("round-trips with base64url (no + / =)", () => {
+    const payload = {
+      responseType: "code",
+      clientId: "abc",
+      redirectUri: "https://claude.ai/api/mcp/auth_callback",
+      scope: ["openid"],
+      state: "x+y/z=",
+      codeChallenge: "abc+def/ghi=",
+    };
+    const encoded = encodeOAuthState(payload);
+    expect(encoded).not.toMatch(/[+/=]/);
+    expect(decodeOAuthState(encoded)).toEqual(payload);
   });
 });
 

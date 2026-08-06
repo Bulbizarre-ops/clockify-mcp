@@ -1,6 +1,18 @@
 import type { AuthRequest, ClientInfo } from "@cloudflare/workers-oauth-provider";
 import { escapeHtml, isHttpUrl } from "./types.js";
 
+export function encodeOAuthState(oauthReqInfo: unknown): string {
+  const b64 = btoa(JSON.stringify(oauthReqInfo));
+  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+export function decodeOAuthState<T = unknown>(state: string): T {
+  const padded = state.replace(/-/g, "+").replace(/_/g, "/");
+  const pad =
+    padded.length % 4 === 0 ? "" : "=".repeat(4 - (padded.length % 4));
+  return JSON.parse(atob(padded + pad)) as T;
+}
+
 export function renderHomePage(): Response {
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -48,7 +60,7 @@ export function renderConsentPage(
       ? escapeHtml(clientInfo.clientUri)
       : "";
   const scopes = escapeHtml(oauthReqInfo.scope?.join(", ") || "none");
-  const state = escapeHtml(btoa(JSON.stringify(oauthReqInfo)));
+  const state = escapeHtml(encodeOAuthState(oauthReqInfo));
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -115,6 +127,45 @@ export function renderConsentPage(
       "X-Frame-Options": "DENY",
       "Content-Security-Policy":
         "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' https:; form-action 'self'; frame-ancestors 'none'; base-uri 'self'",
+    },
+  });
+}
+
+/** WebView-friendly redirect after consent (bare 302 often does nothing in Claude). */
+export function renderRedirectPage(redirectTo: string): Response {
+  const safeUrl = escapeHtml(redirectTo);
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="refresh" content="0;url=${safeUrl}" />
+  <title>Redirecting…</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 480px; margin: 48px auto; padding: 0 20px; color: #111; line-height: 1.5; }
+    a { color: #111; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <p>Authorization approved. Returning to the app…</p>
+  <p>If nothing happens, <a id="continue" href="${safeUrl}">tap here to continue</a>.</p>
+  <script>
+    (function () {
+      var url = ${JSON.stringify(redirectTo)};
+      try { window.location.replace(url); } catch (e) { window.location.href = url; }
+    })();
+  </script>
+</body>
+</html>`;
+  return new Response(html, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+      Refresh: `0;url=${redirectTo}`,
+      "X-Frame-Options": "DENY",
+      "Content-Security-Policy":
+        "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'",
     },
   });
 }

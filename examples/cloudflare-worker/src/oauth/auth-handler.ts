@@ -3,10 +3,23 @@ import type { Env } from "../env.js";
 import { parseAccessMode } from "../clockify/access-mode.js";
 import { parseRegion } from "../clockify/regions.js";
 import type { AuthRequest } from "@cloudflare/workers-oauth-provider";
-import { renderConsentPage, renderHomePage } from "./pages.js";
+import { renderConsentPage, renderHomePage, renderRedirectPage } from "./pages.js";
+import { decodeOAuthState } from "./pages.js";
 import type { ClockifyAuthProps } from "./types.js";
+import { escapeHtml } from "./types.js";
 
 export type AuthEnv = Env & { OAUTH_PROVIDER: OAuthHelpers };
+
+function renderErrorPage(message: string): Response {
+  const safe = escapeHtml(message);
+  return new Response(
+    `<!DOCTYPE html><html><body style="font-family:sans-serif;max-width:480px;margin:40px auto;padding:0 16px"><h1>Authorization failed</h1><p>${safe}</p><p><a href="javascript:history.back()">Go back</a></p></body></html>`,
+    {
+      status: 400,
+      headers: { "Content-Type": "text/html; charset=utf-8" },
+    },
+  );
+}
 
 function discoveryJson(env: Env): Response {
   return Response.json({
@@ -87,7 +100,7 @@ export async function handleAuthRequest(
       const form = await request.formData();
       const state = form.get("state");
       if (!state || typeof state !== "string") {
-        return new Response("Missing state", { status: 400 });
+        return renderErrorPage("Missing state");
       }
 
       const props = propsFromConsentForm(form, {
@@ -95,30 +108,37 @@ export async function handleAuthRequest(
         region: env.DEFAULT_REGION,
       });
       if (!props) {
-        return new Response("Clockify API key is required", { status: 400 });
+        return renderErrorPage("Clockify API key is required");
       }
 
       let oauthReqInfo: AuthRequest;
       try {
-        oauthReqInfo = JSON.parse(atob(state)) as AuthRequest;
+        oauthReqInfo = decodeOAuthState<AuthRequest>(state);
       } catch {
-        return new Response("Invalid state", { status: 400 });
+        return renderErrorPage("Invalid state — restart the connection from Claude.");
       }
 
-      const client = await env.OAUTH_PROVIDER.lookupClient(
-        oauthReqInfo.clientId,
-      );
-      const { redirectTo } = await env.OAUTH_PROVIDER.completeAuthorization({
-        request: oauthReqInfo,
-        userId: `clockify:${await hashPrefix(props.apiKey)}`,
-        metadata: {
-          label: "Clockify MCP",
-          clientName: client?.clientName || "MCP Client",
-        },
-        scope: oauthReqInfo.scope,
-        props,
-      });
-      return Response.redirect(redirectTo, 302);
+      try {
+        const client = await env.OAUTH_PROVIDER.lookupClient(
+          oauthReqInfo.clientId,
+        );
+        const { redirectTo } = await env.OAUTH_PROVIDER.completeAuthorization({
+          request: oauthReqInfo,
+          userId: `clockify:${await hashPrefix(props.apiKey)}`,
+          metadata: {
+            label: "Clockify MCP",
+            clientName: client?.clientName || "MCP Client",
+          },
+          scope: oauthReqInfo.scope,
+          props,
+        });
+        // HTML + JS redirect: Claude WebViews often ignore bare HTTP 302.
+        return renderRedirectPage(redirectTo);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Authorization failed";
+        return renderErrorPage(message);
+      }
     }
   }
 
