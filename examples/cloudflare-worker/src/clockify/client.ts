@@ -50,7 +50,11 @@ export class ClockifyClient {
     const hosts = resolveHosts(options.region);
     this.regularBase = hosts.regularBase;
     this.reportsBase = hosts.reportsBase;
-    this.fetchImpl = options.fetchImpl ?? fetch;
+    // Never assign bare `fetch` to a field — Workers throws Illegal invocation
+    // when the unbound function is called later (lost `this` / runtime binding).
+    this.fetchImpl =
+      options.fetchImpl ??
+      ((input, init) => globalThis.fetch(input, init));
   }
 
   get(path: string, params?: Record<string, string | number | boolean | undefined | null>) {

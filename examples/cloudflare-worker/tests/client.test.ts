@@ -48,4 +48,17 @@ describe("ClockifyClient", () => {
     await expect(client.get("user")).rejects.toBeInstanceOf(ClockifyAPIError);
     await expect(client.get("user")).rejects.toMatchObject({ statusCode: 401 });
   });
+
+  it("calls globalThis.fetch through a wrapper instead of an unbound reference", async () => {
+    const fetchMock = vi.fn(async () => Response.json({ ok: true }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    // Default path must not store bare `fetch` (Workers Illegal invocation).
+    const client = new ClockifyClient({ apiKey: "k", region: "global" });
+    await expect(client.get("user")).resolves.toEqual({ ok: true });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.clockify.me/api/v1/user",
+      expect.objectContaining({ method: "GET" }),
+    );
+  });
 });
