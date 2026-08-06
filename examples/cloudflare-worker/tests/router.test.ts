@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("agents/mcp", () => ({
+vi.mock("agents/mcp/server", () => ({
   createMcpHandler: () =>
     async () =>
       new Response("mcp-ok", { status: 200 }),

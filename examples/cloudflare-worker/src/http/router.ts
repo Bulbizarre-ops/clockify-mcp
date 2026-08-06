@@ -1,4 +1,4 @@
-import { createMcpHandler } from "agents/mcp";
+import { createMcpHandler } from "agents/mcp/server";
 import { extractClockifyCredentials } from "../auth/request-credentials.js";
 import { ClockifyClient } from "../clockify/client.js";
 import type { Env } from "../env.js";
@@ -77,8 +77,16 @@ export async function handleRequest(
       region: credentials.region,
       defaultWorkspaceId: credentials.workspaceId,
     });
-    const server = createClockifyMcpServer(client, credentials.accessMode);
-    const mcpFetch = createMcpHandler(server, { route: "/mcp" });
+    // SDK v2: pass a factory so each request gets an isolated McpServer.
+    const mcpFetch = createMcpHandler(
+      () => createClockifyMcpServer(client, credentials.accessMode),
+      {
+        route: "/mcp",
+        // We already apply CORS + auth at the Worker edge.
+        corsOptions: false,
+        allowedOriginHostnames: "*",
+      },
+    );
     const executionCtx =
       ctx ??
       ({

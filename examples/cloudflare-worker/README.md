@@ -52,7 +52,7 @@ See [WAVES.md](./WAVES.md).
 Client  --POST /mcp + API key-->  Worker
                                   ├─ extractClockifyCredentials
                                   ├─ access mode filter
-                                  ├─ McpServer + createMcpHandler
+                                  ├─ createMcpHandler(factory)  # agents/mcp/server + MCP SDK v2
                                   └─ Clockify REST / Reports API
 ```
 

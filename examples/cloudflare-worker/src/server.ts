@@ -1,4 +1,4 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import type { AccessMode } from "./clockify/access-mode.js";
 import type { ClockifyClient } from "./clockify/client.js";
