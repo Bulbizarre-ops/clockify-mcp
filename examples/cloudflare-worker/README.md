@@ -15,22 +15,24 @@ npm run dev          # wrangler dev → http://127.0.0.1:8787/mcp
 npx wrangler deploy  # optional
 ```
 
-## Auth (BYO key)
+## Auth
 
-Every `POST /mcp` request must include one of:
+### OAuth 2.1 (Claude web / mobile custom connector)
+
+1. Add custom connector URL: `https://<your-worker>.workers.dev/mcp`
+2. Claude opens `/authorize`
+3. Paste your **Clockify API key** (+ access mode / region)
+4. Approve — the key is stored on the OAuth grant (encrypted by the provider)
+
+### BYO API key (Claude Desktop / mcp-remote)
+
+Send on every `/mcp` request:
 
 - `Authorization: Bearer <CLOCKIFY_API_KEY>`
-- `X-Api-Key: <CLOCKIFY_API_KEY>`
 
-Optional headers:
+Optional headers: `X-Clockify-Access-Mode`, `X-Clockify-Region`, `X-Clockify-Workspace-Id`.
 
-| Header | Values | Effect |
-|--------|--------|--------|
-| `X-Clockify-Access-Mode` | `read` \| `time-tracking` \| `full` | Which tools are registered (default: Worker `DEFAULT_ACCESS_MODE` / `read`) |
-| `X-Clockify-Region` | `global` \| `euc1` \| `use2` \| `euw2` \| `apse2` | Clockify API hosts |
-| `X-Clockify-Workspace-Id` | opaque id | Fallback `workspace_id` for tools |
-
-The Worker **never stores** the API key. `GET /` returns discovery JSON without secrets. Missing key on `/mcp` → `401 {"error":"missing_api_key"}`.
+The Worker never logs the API key. `GET /` returns discovery JSON (use `Accept: application/json`).
 
 ### Access modes (aligned with the Python server)
 
@@ -40,7 +42,7 @@ The Worker **never stores** the API key. `GET /` returns discovery JSON without 
 | `time-tracking` | same | `create_time_entry`, `update_time_entry`, `delete_time_entry` |
 | `full` | same | + `stop_running_timer` + CRUD clients/projects/tasks/tags |
 
-`stop_running_timer` is **full-only**, matching the Python server (time-tracking can start a timer via `create_time_entry` without `end`; stop with `update_time_entry` or use `full`).
+`stop_running_timer` is **full-only**, matching the Python server.
 
 ## Wave 1 tools (32)
 
@@ -49,12 +51,14 @@ See [WAVES.md](./WAVES.md).
 ## Architecture
 
 ```
-Client  --POST /mcp + API key-->  Worker
-                                  ├─ extractClockifyCredentials
-                                  ├─ access mode filter
-                                  ├─ createMcpHandler(factory)  # agents/mcp/server + MCP SDK v2
-                                  └─ Clockify REST / Reports API
+Client  --OAuth or Bearer Clockify key-->  Worker (OAuthProvider)
+                                           ├─ /authorize consent (paste Clockify key → grant props)
+                                           ├─ resolveExternalToken (desktop BYO)
+                                           ├─ createMcpHandler(factory)  # agents/mcp/server + MCP SDK v2
+                                           └─ Clockify REST / Reports API
 ```
+
+Requires Wrangler KV binding `OAUTH_KV` (see `wrangler.toml`).
 
 ## Contribute upstream
 

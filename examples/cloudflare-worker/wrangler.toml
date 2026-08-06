@@ -1,12 +1,16 @@
 name = "clockify-mcp"
 main = "src/index.ts"
 compatibility_date = "2025-11-01"
-compatibility_flags = ["nodejs_compat"]
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 
 [vars]
-# Default access mode when the client omits X-Clockify-Access-Mode.
+# Default access mode when the client omits X-Clockify-Access-Mode / consent choice.
 # Matches the Python server: read | time-tracking | full
 DEFAULT_ACCESS_MODE = "read"
-# Default region when the client omits X-Clockify-Region.
+# Default region when the client omits X-Clockify-Region / consent choice.
 # global | euc1 | use2 | euw2 | apse2
 DEFAULT_REGION = "global"
+
+[[kv_namespaces]]
+binding = "OAUTH_KV"
+id = "584ec0fa1bbf4f5481ade9b4d916dc12"
