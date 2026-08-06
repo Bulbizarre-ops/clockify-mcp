@@ -28,6 +28,8 @@ Companion to the Python server’s phased coverage. Tool **names** and **access 
 
 ### Shipped
 
+`bulk_update_time_entries` (**time-tracking** / **full**, `minPlan: free`) — bulk-edit a user's time entries via `PUT /workspaces/{ws}/user/{userId}/time-entries`. Each item needs `id` plus fields to change (`project_id`, `task_id`, `tag_ids`, description, dates, …). Use to reclassify historical entries after building a new client/project/task/tag convention.
+
 `backup_time_entries` (**full** mode, `minPlan: free`) — copy completed time entries from a source workspace into a dedicated destination workspace. Pass `destination_workspace_id` **or** `destination_workspace_name` (reuse by name, or `POST /workspaces` to create — requires Cake `organizationId`, taken from source `cakeOrganizationId` or optional `organization_id`). Projects/tags are matched by name (created on destination if missing). Running timers are skipped. **Idempotent by default**: embeds `[clk-backup:<sourceId>]` and skips already-present entries (marker or content fingerprint); `force=true` bypasses. Supports `dry_run`, optional `start`/`end` filters, optional `user_id` (defaults to authenticated user).
 
 **Local CLI (not MCP):** for bulk migrations from a laptop, use [`scripts/backup_time_entries.py`](./scripts/backup_time_entries.py) — same semantics, documented in [`scripts/README.md`](./scripts/README.md).
@@ -35,8 +37,8 @@ Companion to the Python server’s phased coverage. Tool **names** and **access 
 ### Planned
 
 Time-off, holidays, expenses, approvals, invoices (subset), scheduling, custom fields.
-Also consider Python time-entry extras already in full/time-tracking upstream:
-`duplicate_time_entry`, `bulk_update_time_entries`, `create_time_entry_for_user`.
+Also consider Python time-entry extras already upstream:
+`duplicate_time_entry`, `create_time_entry_for_user`.
 
 **Paid domains must declare `minPlan: "standard"` or `"pro"`** in `registry.ts` so `DEFAULT_PLAN=free` hides them (see README — Workspace plan). Do not register paid tools as `free`.
 

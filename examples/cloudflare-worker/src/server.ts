@@ -254,6 +254,32 @@ const SCHEMAS: SchemaMap = {
     billable: z.boolean().optional(),
     type: z.string().optional(),
   },
+  bulk_update_time_entries: {
+    user_id: z
+      .string()
+      .describe(
+        "User whose entries to edit; resolve with get_current_user or list_users.",
+      ),
+    entries: z
+      .array(
+        z.object({
+          id: z.string().describe("Time entry id to update."),
+          start: z.string().optional(),
+          end: z.string().optional(),
+          description: z.string().optional(),
+          project_id: z.string().optional(),
+          task_id: z.string().optional(),
+          tag_ids: z.array(z.string()).optional(),
+          billable: z.boolean().optional(),
+          type: z.string().optional(),
+        }),
+      )
+      .min(1)
+      .describe(
+        "Entries to edit; each needs id plus fields to change (project_id, task_id, tag_ids, …).",
+      ),
+    workspace_id: workspaceId,
+  },
   delete_time_entry: {
     time_entry_id: z.string(),
     workspace_id: workspaceId,

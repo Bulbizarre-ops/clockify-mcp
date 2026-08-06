@@ -99,4 +99,53 @@ describe("createHandlers wave-1 API mapping", () => {
       expect.any(Object),
     );
   });
+
+  it("bulk_update_time_entries PUTs snake_case fields as camelCase", async () => {
+    const put = vi.fn(async () => [{ id: "te1" }, { id: "te2" }]);
+    const handlers = createHandlers(
+      mockClient({ defaultWorkspaceId: "ws", put }),
+    );
+    await handlers.bulk_update_time_entries({
+      user_id: "u1",
+      entries: [
+        { id: "te1", project_id: "p1", task_id: "t1", tag_ids: ["tag1"] },
+        {
+          id: "te2",
+          description: "reclassed",
+          billable: true,
+          start: "2026-01-01T09:00:00Z",
+        },
+      ],
+    });
+    expect(put).toHaveBeenCalledWith("workspaces/ws/user/u1/time-entries", [
+      {
+        id: "te1",
+        projectId: "p1",
+        taskId: "t1",
+        tagIds: ["tag1"],
+      },
+      {
+        id: "te2",
+        description: "reclassed",
+        billable: true,
+        start: "2026-01-01T09:00:00Z",
+      },
+    ]);
+  });
+
+  it("bulk_update_time_entries requires user_id and non-empty entries with id", async () => {
+    const handlers = createHandlers(mockClient({ defaultWorkspaceId: "ws" }));
+    await expect(
+      handlers.bulk_update_time_entries({ entries: [{ id: "te1" }] }),
+    ).rejects.toThrow(/user_id/);
+    await expect(
+      handlers.bulk_update_time_entries({ user_id: "u1", entries: [] }),
+    ).rejects.toThrow(/entries/);
+    await expect(
+      handlers.bulk_update_time_entries({
+        user_id: "u1",
+        entries: [{ project_id: "p1" }],
+      }),
+    ).rejects.toThrow(/id/);
+  });
 });

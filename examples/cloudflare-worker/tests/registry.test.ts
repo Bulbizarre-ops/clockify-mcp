@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { listToolsForMode, WAVE1_TOOLS } from "../src/domains/registry.js";
 
 describe("WAVE1_TOOLS", () => {
-  it("declares 33 tools including backup_time_entries", () => {
-    expect(WAVE1_TOOLS).toHaveLength(33);
+  it("declares 34 tools including backup and bulk_update", () => {
+    expect(WAVE1_TOOLS).toHaveLength(34);
     expect(WAVE1_TOOLS.map((t) => t.name)).toContain("backup_time_entries");
+    expect(WAVE1_TOOLS.map((t) => t.name)).toContain("bulk_update_time_entries");
   });
 
   it("uses exact Python-aligned tool names for core coverage", () => {
@@ -64,10 +65,11 @@ describe("listToolsForMode", () => {
     expect(names).toContain("create_time_entry");
     expect(names).toContain("update_time_entry");
     expect(names).toContain("delete_time_entry");
+    expect(names).toContain("bulk_update_time_entries");
     // Matches Python: stop_running_timer is full-only
     expect(names).not.toContain("stop_running_timer");
     expect(names).not.toContain("create_client");
-    expect(names).toHaveLength(19);
+    expect(names).toHaveLength(20);
   });
 
   it("exposes all tools including backup in full mode", () => {
@@ -75,7 +77,8 @@ describe("listToolsForMode", () => {
     expect(names).toContain("stop_running_timer");
     expect(names).toContain("delete_project");
     expect(names).toContain("backup_time_entries");
-    expect(names).toHaveLength(33);
+    expect(names).toContain("bulk_update_time_entries");
+    expect(names).toHaveLength(34);
   });
 
   it("keeps backup_time_entries full-only", () => {

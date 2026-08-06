@@ -39,7 +39,7 @@ The Worker never logs the API key. `GET /` returns discovery JSON (use `Accept: 
 | Mode | Reads | Writes |
 |------|-------|--------|
 | `read` (default) | All wave-1 reads | none |
-| `time-tracking` | same | `create_time_entry`, `update_time_entry`, `delete_time_entry` |
+| `time-tracking` | same | `create_time_entry`, `update_time_entry`, `delete_time_entry`, `bulk_update_time_entries` |
 | `full` | same | + `stop_running_timer` + CRUD clients/projects/tasks/tags |
 
 `stop_running_timer` is **full-only**, matching the Python server.

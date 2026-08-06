@@ -52,6 +52,12 @@ export const WAVE1_TOOLS: ToolDefinition[] = [
   tool("create_time_entry", "time-tracking", 1, "Create a time entry for the authenticated user."),
   tool("update_time_entry", "time-tracking", 1, "Update a time entry by id."),
   tool("delete_time_entry", "time-tracking", 1, "Delete a time entry by id."),
+  tool(
+    "bulk_update_time_entries",
+    "time-tracking",
+    2,
+    "Bulk-edit several of a user's time entries (reclassify project/task/tags). Each entry needs id plus fields to change.",
+  ),
   tool("stop_running_timer", "full", 1, "Stop a user's currently running timer."),
   tool("create_client", "full", 1, "Create a client."),
   tool("update_client", "full", 1, "Update a client."),

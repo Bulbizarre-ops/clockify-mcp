@@ -355,6 +355,37 @@ export function createHandlers(client: ClockifyClient): Handlers {
       );
     },
 
+    bulk_update_time_entries: async (args) => {
+      const ws = resolveWorkspaceId(client, args.workspace_id);
+      const userId = asString(args.user_id);
+      if (!userId) throw new Error("user_id is required");
+      if (!Array.isArray(args.entries) || args.entries.length === 0) {
+        throw new Error("entries is required and must be a non-empty array");
+      }
+      const payload = args.entries.map((raw, index) => {
+        if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+          throw new Error(`entries[${index}] must be an object`);
+        }
+        const entry = raw as Dict;
+        const id = asString(entry.id);
+        if (!id) throw new Error(`entries[${index}].id is required`);
+        // Accept snake_case (MCP) or camelCase (Clockify / Python-style) fields.
+        return dropUndefined({
+          id,
+          start: asString(entry.start),
+          end: asString(entry.end),
+          description: asString(entry.description),
+          projectId:
+            asString(entry.project_id) ?? asString(entry.projectId),
+          taskId: asString(entry.task_id) ?? asString(entry.taskId),
+          tagIds: asStringArray(entry.tag_ids) ?? asStringArray(entry.tagIds),
+          billable: asBool(entry.billable),
+          type: asString(entry.type),
+        });
+      });
+      return client.put(`workspaces/${ws}/user/${userId}/time-entries`, payload);
+    },
+
     delete_time_entry: async (args) => {
       const ws = resolveWorkspaceId(client, args.workspace_id);
       const timeEntryId = asString(args.time_entry_id);
