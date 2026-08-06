@@ -114,6 +114,14 @@ Add this to your `claude_desktop_config.json`:
 
 Restart Claude Desktop. Ask: _"What workspaces do I have in Clockify?"_
 
+### Cloudflare Workers (example)
+
+For **remote Streamable HTTP MCP** on Cloudflare Workers (bring-your-own API key per request, tool names + access modes aligned with this Python server), see the TypeScript companion:
+
+**➡️ [`examples/cloudflare-worker/`](examples/cloudflare-worker/)** — `npm ci && npm test && npm run dev`
+
+This does not replace the Python stdio server; it is an optional HTTP hosting path for community / remote clients.
+
 <details>
 <summary>Using pip install instead of uvx</summary>
 

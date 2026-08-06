@@ -1,0 +1,12 @@
+name = "clockify-mcp"
+main = "src/index.ts"
+compatibility_date = "2025-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# Default access mode when the client omits X-Clockify-Access-Mode.
+# Matches the Python server: read | time-tracking | full
+DEFAULT_ACCESS_MODE = "read"
+# Default region when the client omits X-Clockify-Region.
+# global | euc1 | use2 | euw2 | apse2
+DEFAULT_REGION = "global"

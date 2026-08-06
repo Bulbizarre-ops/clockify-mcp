@@ -1,0 +1,12 @@
+import type { Env } from "./env.js";
+import { handleRequest } from "./http/router.js";
+
+export default {
+  async fetch(
+    request: Request,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<Response> {
+    return handleRequest(request, env, ctx);
+  },
+} satisfies ExportedHandler<Env>;
