@@ -50,5 +50,11 @@ export default new OAuthProvider<WorkerEnv>({
   authorizeEndpoint: "/authorize",
   tokenEndpoint: "/oauth/token",
   clientRegistrationEndpoint: "/oauth/register",
+  // Pin RFC 8707 resource / aud to the MCP endpoint Claude registers.
+  resourceMetadata: {
+    resource: "https://clockify-mcp.aymeric-veyron.workers.dev/mcp",
+    resource_name: "Clockify MCP",
+    scopes_supported: ["read", "time-tracking", "full"],
+  },
   resolveExternalToken,
 });

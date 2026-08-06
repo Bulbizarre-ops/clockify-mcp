@@ -124,7 +124,7 @@ export async function handleAuthRequest(
         );
         const { redirectTo } = await env.OAUTH_PROVIDER.completeAuthorization({
           request: oauthReqInfo,
-          userId: `clockify:${await hashPrefix(props.apiKey)}`,
+          userId: `clk_${await hashPrefix(props.apiKey)}`,
           metadata: {
             label: "Clockify MCP",
             clientName: client?.clientName || "MCP Client",
