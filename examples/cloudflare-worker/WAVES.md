@@ -24,7 +24,13 @@ Companion to the Python server’s phased coverage. Tool **names** and **access 
 `create_task`, `update_task`, `delete_task`,
 `create_tag`, `update_tag`, `delete_tag`
 
-## Wave 2 (planned)
+## Wave 2 (partial)
+
+### Shipped
+
+`backup_time_entries` (**full** mode) — copy completed time entries from a source workspace into a dedicated destination workspace. Projects/tags are matched by name (created on destination if missing). Running timers are skipped. Supports `dry_run`, optional `start`/`end` filters, optional `user_id` (defaults to authenticated user).
+
+### Planned
 
 Time-off, holidays, expenses, approvals, invoices (subset), scheduling, custom fields.
 Also consider Python time-entry extras already in full/time-tracking upstream:

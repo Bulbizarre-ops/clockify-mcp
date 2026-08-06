@@ -1,4 +1,6 @@
 import type { ClockifyClient } from "../clockify/client.js";
+import { backupTimeEntries } from "./backup.js";
+import { resolveWorkspaceId } from "./workspace.js";
 
 type Dict = Record<string, unknown>;
 
@@ -27,18 +29,9 @@ function asStringArray(value: unknown): string[] | undefined {
   return value.filter((v): v is string => typeof v === "string");
 }
 
-export function resolveWorkspaceId(
-  client: ClockifyClient,
-  workspaceId: unknown,
-): string {
-  const resolved = asString(workspaceId) ?? client.defaultWorkspaceId;
-  if (!resolved) {
-    throw new Error(
-      "No workspace_id given and no default configured. Call list_workspaces to find one, or send X-Clockify-Workspace-Id.",
-    );
-  }
-  return resolved;
-}
+export type ToolArgs = Dict;
+export type ToolHandler = (args: ToolArgs) => Promise<unknown>;
+export type Handlers = Record<string, ToolHandler>;
 
 function pageParams(args: Dict): Record<string, number | undefined> {
   return {
@@ -46,10 +39,6 @@ function pageParams(args: Dict): Record<string, number | undefined> {
     "page-size": asNumber(args.page_size),
   };
 }
-
-export type ToolArgs = Dict;
-export type ToolHandler = (args: ToolArgs) => Promise<unknown>;
-export type Handlers = Record<string, ToolHandler>;
 
 export function createHandlers(client: ClockifyClient): Handlers {
   return {
@@ -423,5 +412,7 @@ export function createHandlers(client: ClockifyClient): Handlers {
         }),
       );
     },
+
+    backup_time_entries: async (args) => backupTimeEntries(client, args),
   };
 }

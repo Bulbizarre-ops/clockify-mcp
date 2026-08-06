@@ -246,6 +246,30 @@ const SCHEMAS: SchemaMap = {
     page_size: z.number().int().optional(),
     sort_column: z.string().optional(),
   },
+  backup_time_entries: {
+    destination_workspace_id: z
+      .string()
+      .describe("Dedicated Clockify workspace that receives the backup copy."),
+    source_workspace_id: workspaceId.describe(
+      "Workspace to read from; omit to use X-Clockify-Workspace-Id / default.",
+    ),
+    user_id: z
+      .string()
+      .optional()
+      .describe("User whose entries to backup; defaults to the authenticated user."),
+    start: z
+      .string()
+      .optional()
+      .describe("Optional ISO-8601 lower bound filter on time entries."),
+    end: z
+      .string()
+      .optional()
+      .describe("Optional ISO-8601 upper bound filter on time entries."),
+    dry_run: z
+      .boolean()
+      .optional()
+      .describe("When true, report what would be copied without writing."),
+  },
 };
 
 export function createClockifyMcpServer(

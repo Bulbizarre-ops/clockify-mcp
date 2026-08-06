@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 import { listToolsForMode, WAVE1_TOOLS } from "../src/domains/registry.js";
 
 describe("WAVE1_TOOLS", () => {
-  it("declares exactly 32 wave-1 tools", () => {
-    expect(WAVE1_TOOLS).toHaveLength(32);
+  it("declares 33 tools including backup_time_entries", () => {
+    expect(WAVE1_TOOLS).toHaveLength(33);
+    expect(WAVE1_TOOLS.map((t) => t.name)).toContain("backup_time_entries");
   });
 
   it("uses exact Python-aligned tool names for core coverage", () => {
@@ -69,10 +70,17 @@ describe("listToolsForMode", () => {
     expect(names).toHaveLength(19);
   });
 
-  it("exposes all wave-1 tools in full mode", () => {
+  it("exposes all tools including backup in full mode", () => {
     const names = listToolsForMode("full").map((t) => t.name);
     expect(names).toContain("stop_running_timer");
     expect(names).toContain("delete_project");
-    expect(names).toHaveLength(32);
+    expect(names).toContain("backup_time_entries");
+    expect(names).toHaveLength(33);
+  });
+
+  it("keeps backup_time_entries full-only", () => {
+    expect(listToolsForMode("time-tracking").map((t) => t.name)).not.toContain(
+      "backup_time_entries",
+    );
   });
 });

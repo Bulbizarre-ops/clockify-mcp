@@ -11,10 +11,8 @@ export type ToolDefinition = {
 };
 
 /**
- * Wave 1 tool catalog. Names and access tiers match the Python server:
- * - reads always registered
- * - time-tracking adds create/update/delete_time_entry
- * - full adds stop_running_timer + CRUD for clients/projects/tasks/tags
+ * Tool catalog (wave 1 core + selected wave 2 ops).
+ * Access tiers match the Python server where applicable.
  */
 export const WAVE1_TOOLS: ToolDefinition[] = [
   { name: "get_current_user", tier: "read", wave: 1, description: "Get the authenticated Clockify user." },
@@ -49,6 +47,13 @@ export const WAVE1_TOOLS: ToolDefinition[] = [
   { name: "create_tag", tier: "full", wave: 1, description: "Create a tag." },
   { name: "update_tag", tier: "full", wave: 1, description: "Update a tag." },
   { name: "delete_tag", tier: "full", wave: 1, description: "Delete a tag." },
+  {
+    name: "backup_time_entries",
+    tier: "full",
+    wave: 2,
+    description:
+      "Backup completed time entries from a source workspace into a dedicated destination workspace (projects/tags matched by name).",
+  },
 ];
 
 function isAllowed(tier: ToolTier, mode: AccessMode): boolean {
