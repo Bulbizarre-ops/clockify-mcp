@@ -2,18 +2,21 @@ import {
   parseAccessMode,
   type AccessMode,
 } from "../clockify/access-mode.js";
+import { parseClockifyPlan, type ClockifyPlan } from "../clockify/plan.js";
 import { parseRegion, type ClockifyRegion } from "../clockify/regions.js";
 
 export type ClockifyCredentials = {
   apiKey: string;
   accessMode: AccessMode;
   region: ClockifyRegion;
+  plan: ClockifyPlan;
   workspaceId?: string;
 };
 
 export type CredentialDefaults = {
   defaultAccessMode?: string;
   defaultRegion?: string;
+  defaultPlan?: string;
 };
 
 /**
@@ -36,6 +39,7 @@ export function extractClockifyCredentials(
 
   const modeHeader = request.headers.get("X-Clockify-Access-Mode");
   const regionHeader = request.headers.get("X-Clockify-Region");
+  const planHeader = request.headers.get("X-Clockify-Plan");
   const workspaceId =
     request.headers.get("X-Clockify-Workspace-Id")?.trim() || undefined;
 
@@ -43,6 +47,7 @@ export function extractClockifyCredentials(
     apiKey,
     accessMode: parseAccessMode(modeHeader ?? defaults.defaultAccessMode),
     region: parseRegion(regionHeader ?? defaults.defaultRegion),
+    plan: parseClockifyPlan(planHeader ?? defaults.defaultPlan),
     workspaceId,
   };
 }

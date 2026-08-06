@@ -28,7 +28,7 @@ Companion to the Python server’s phased coverage. Tool **names** and **access 
 
 ### Shipped
 
-`backup_time_entries` (**full** mode) — copy completed time entries from a source workspace into a dedicated destination workspace. Pass `destination_workspace_id` **or** `destination_workspace_name` (reuse by name, or `POST /workspaces` to create — requires Cake `organizationId`, taken from source `cakeOrganizationId` or optional `organization_id`). Projects/tags are matched by name (created on destination if missing). Running timers are skipped. **Idempotent by default**: embeds `[clk-backup:<sourceId>]` and skips already-present entries (marker or content fingerprint); `force=true` bypasses. Supports `dry_run`, optional `start`/`end` filters, optional `user_id` (defaults to authenticated user).
+`backup_time_entries` (**full** mode, `minPlan: free`) — copy completed time entries from a source workspace into a dedicated destination workspace. Pass `destination_workspace_id` **or** `destination_workspace_name` (reuse by name, or `POST /workspaces` to create — requires Cake `organizationId`, taken from source `cakeOrganizationId` or optional `organization_id`). Projects/tags are matched by name (created on destination if missing). Running timers are skipped. **Idempotent by default**: embeds `[clk-backup:<sourceId>]` and skips already-present entries (marker or content fingerprint); `force=true` bypasses. Supports `dry_run`, optional `start`/`end` filters, optional `user_id` (defaults to authenticated user).
 
 **Local CLI (not MCP):** for bulk migrations from a laptop, use [`scripts/backup_time_entries.py`](./scripts/backup_time_entries.py) — same semantics, documented in [`scripts/README.md`](./scripts/README.md).
 
@@ -38,17 +38,20 @@ Time-off, holidays, expenses, approvals, invoices (subset), scheduling, custom f
 Also consider Python time-entry extras already in full/time-tracking upstream:
 `duplicate_time_entry`, `bulk_update_time_entries`, `create_time_entry_for_user`.
 
+**Paid domains must declare `minPlan: "standard"` or `"pro"`** in `registry.ts` so `DEFAULT_PLAN=free` hides them (see README — Workspace plan). Do not register paid tools as `free`.
+
 ## Wave 3 (planned)
 
 Webhooks, shared reports, weekly/attendance/expense reports, exports (Workers-safe variant — no local `save_path`).
-
+Same `minPlan` rule as Wave 2 for any paid-only endpoints.
 ## Adding a tool (TDD)
 
 1. Registry test — name appears in the correct mode (red).
 2. Handler test — mock `ClockifyClient` (red).
-3. Entry in `src/domains/registry.ts` (tier + wave).
+3. Entry in `src/domains/registry.ts` (tier + wave + **minPlan**).
 4. Handler in `src/domains/handlers.ts`.
 5. Zod schema + `registerTool` wiring in `src/server.ts`.
 6. `npm test` green; update this file + README if user-facing.
 
 Never invent Clockify IDs. Always require `workspace_id` or `X-Clockify-Workspace-Id`.
+Paid Clockify features must set `minPlan` above `free` so Free workspaces are not offered broken tools.

@@ -11,6 +11,7 @@ import { mcpApiHandler } from "../src/mcp-api.js";
 const env = {
   DEFAULT_ACCESS_MODE: "read",
   DEFAULT_REGION: "global",
+  DEFAULT_PLAN: "free",
   OAUTH_KV: {} as KVNamespace,
 };
 

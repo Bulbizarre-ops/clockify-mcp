@@ -3,8 +3,34 @@ import { z } from "zod";
 import type { AccessMode } from "./clockify/access-mode.js";
 import type { ClockifyClient } from "./clockify/client.js";
 import { ClockifyAPIError } from "./clockify/client.js";
+import type { ClockifyPlan } from "./clockify/plan.js";
 import { createHandlers } from "./domains/handlers.js";
 import { listToolsForMode } from "./domains/registry.js";
+
+const INSTRUCTIONS = `\
+Tools for the Clockify time-tracking API over Streamable HTTP (Cloudflare Worker).
+
+Wave 1 tools (workspaces, users, clients, projects, tasks, tags, time entries, \
+summary/detailed reports, backup) work on the Free Clockify plan. Paid domains \
+(time off, holidays, expenses, approvals, custom fields, scheduling, invoices) \
+are not registered yet; when added they require Standard/Pro and may be gated by \
+DEFAULT_PLAN / X-Clockify-Plan.
+
+ACCESS MODES: write tools register based on access mode — read (default, no writes), \
+time-tracking (only time-entry create/update/delete), or full (all writes including \
+clients/projects/tasks/tags and backup).
+
+ERRORS: when a tool fails, the message may be prefixed with a category. \
+PLAN_REQUIRED — the workspace plan does not include this feature; tell the user to \
+upgrade (e.g. Standard/Pro); do not retry. ACCESS_DENIED — the feature is not enabled \
+in Clockify → Workspace Settings OR the API key's user lacks the required role; \
+surface both possibilities; do not retry. AUTH — the API key is missing, invalid, or \
+revoked. Always relay the cause to the user instead of retrying blindly.
+
+DISCOVERY: Call get_current_user and list_workspaces to resolve the workspace, \
+list_users to resolve people, and the list_* tools to resolve projects, tasks, \
+clients, and tags before filtering or creating anything.\
+`;
 
 const workspaceId = z
   .string()
@@ -25,12 +51,18 @@ function jsonResult(data: unknown) {
 }
 
 function errorResult(error: unknown) {
-  const message =
-    error instanceof ClockifyAPIError
-      ? error.message
-      : error instanceof Error
-        ? error.message
-        : String(error);
+  if (error instanceof ClockifyAPIError) {
+    const lines = [error.message];
+    if (error.category) {
+      lines[0] = `[${error.category}] ${error.message}`;
+      if (error.hint) lines.push(error.hint);
+    }
+    return {
+      content: [{ type: "text" as const, text: lines.join("\n") }],
+      isError: true,
+    };
+  }
+  const message = error instanceof Error ? error.message : String(error);
   return {
     content: [{ type: "text" as const, text: message }],
     isError: true,
@@ -296,13 +328,17 @@ const SCHEMAS: SchemaMap = {
 export function createClockifyMcpServer(
   client: ClockifyClient,
   accessMode: AccessMode,
+  plan: ClockifyPlan = "all",
 ): McpServer {
-  const server = new McpServer({
-    name: "clockify-mcp",
-    version: "0.1.0",
-  });
+  const server = new McpServer(
+    {
+      name: "clockify-mcp",
+      version: "0.1.0",
+    },
+    { instructions: INSTRUCTIONS },
+  );
   const handlers = createHandlers(client);
-  const tools = listToolsForMode(accessMode);
+  const tools = listToolsForMode(accessMode, plan);
 
   for (const tool of tools) {
     const handler = handlers[tool.name];

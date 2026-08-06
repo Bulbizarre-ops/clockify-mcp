@@ -53,7 +53,21 @@ describe("propsFromConsentForm", () => {
       apiKey: "clockify-secret",
       accessMode: "full",
       region: "euc1",
+      plan: "free",
       workspaceId: "ws-1",
     });
+  });
+
+  it("honors plan from form or defaults", () => {
+    const form = new FormData();
+    form.set("api_key", "k");
+    form.set("plan", "pro");
+    expect(propsFromConsentForm(form, {})?.plan).toBe("pro");
+
+    const form2 = new FormData();
+    form2.set("api_key", "k");
+    expect(propsFromConsentForm(form2, { plan: "standard" })?.plan).toBe(
+      "standard",
+    );
   });
 });

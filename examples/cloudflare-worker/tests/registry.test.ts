@@ -83,4 +83,14 @@ describe("listToolsForMode", () => {
       "backup_time_entries",
     );
   });
+
+  it("marks every current tool as Free-compatible", () => {
+    expect(WAVE1_TOOLS.every((t) => t.minPlan === "free")).toBe(true);
+  });
+
+  it("keeps the same catalog on DEFAULT_PLAN=free (all tools are free)", () => {
+    expect(listToolsForMode("full", "free")).toHaveLength(
+      listToolsForMode("full", "all").length,
+    );
+  });
 });

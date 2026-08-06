@@ -1,4 +1,5 @@
 import type { AccessMode } from "../clockify/access-mode.js";
+import type { ClockifyPlan } from "../clockify/plan.js";
 import type { ClockifyRegion } from "../clockify/regions.js";
 
 /** Props stored on the OAuth grant (and set on ctx.props for /mcp). */
@@ -6,6 +7,7 @@ export type ClockifyAuthProps = {
   apiKey: string;
   accessMode: AccessMode;
   region: ClockifyRegion;
+  plan: ClockifyPlan;
   workspaceId?: string;
 };
 

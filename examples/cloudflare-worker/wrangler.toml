@@ -10,6 +10,9 @@ DEFAULT_ACCESS_MODE = "read"
 # Default region when the client omits X-Clockify-Region / consent choice.
 # global | euc1 | use2 | euw2 | apse2
 DEFAULT_REGION = "global"
+# Workspace plan gate: free | standard | pro | all
+# free hides tools that declare minPlan standard/pro (Wave 2+ paid domains).
+DEFAULT_PLAN = "free"
 
 [[kv_namespaces]]
 binding = "OAUTH_KV"

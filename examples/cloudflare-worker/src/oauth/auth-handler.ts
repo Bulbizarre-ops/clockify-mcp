@@ -1,6 +1,7 @@
 import type { OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import type { Env } from "../env.js";
 import { parseAccessMode } from "../clockify/access-mode.js";
+import { parseClockifyPlan } from "../clockify/plan.js";
 import { parseRegion } from "../clockify/regions.js";
 import type { AuthRequest } from "@cloudflare/workers-oauth-provider";
 import { renderConsentPage, renderHomePage, renderRedirectPage } from "./pages.js";
@@ -42,12 +43,14 @@ function discoveryJson(env: Env): Response {
       optional: [
         "X-Clockify-Access-Mode: read | time-tracking | full",
         "X-Clockify-Region: global | euc1 | use2 | euw2 | apse2",
+        "X-Clockify-Plan: free | standard | pro | all",
         "X-Clockify-Workspace-Id",
       ],
     },
     defaults: {
       accessMode: env.DEFAULT_ACCESS_MODE ?? "read",
       region: env.DEFAULT_REGION ?? "global",
+      plan: env.DEFAULT_PLAN ?? "free",
     },
     note: "OAuth consent stores your Clockify API key on the grant. Desktop clients may still send the Clockify key as Bearer.",
   });
@@ -56,7 +59,7 @@ function discoveryJson(env: Env): Response {
 /** Exported for unit tests — builds props from the consent form fields. */
 export function propsFromConsentForm(
   form: FormData,
-  defaults: { accessMode?: string; region?: string },
+  defaults: { accessMode?: string; region?: string; plan?: string },
 ): ClockifyAuthProps | null {
   const apiKey = String(form.get("api_key") || "").trim();
   if (!apiKey) return null;
@@ -66,6 +69,9 @@ export function propsFromConsentForm(
       String(form.get("access_mode") || defaults.accessMode || "read"),
     ),
     region: parseRegion(String(form.get("region") || defaults.region || "global")),
+    plan: parseClockifyPlan(
+      String(form.get("plan") || defaults.plan || "free"),
+    ),
     workspaceId: String(form.get("workspace_id") || "").trim() || undefined,
   };
 }
@@ -106,6 +112,7 @@ export async function handleAuthRequest(
       const props = propsFromConsentForm(form, {
         accessMode: env.DEFAULT_ACCESS_MODE,
         region: env.DEFAULT_REGION,
+        plan: env.DEFAULT_PLAN,
       });
       if (!props) {
         return renderErrorPage("Clockify API key is required");

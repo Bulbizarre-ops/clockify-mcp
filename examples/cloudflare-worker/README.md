@@ -30,7 +30,7 @@ Send on every `/mcp` request:
 
 - `Authorization: Bearer <CLOCKIFY_API_KEY>`
 
-Optional headers: `X-Clockify-Access-Mode`, `X-Clockify-Region`, `X-Clockify-Workspace-Id`.
+Optional headers: `X-Clockify-Access-Mode`, `X-Clockify-Region`, `X-Clockify-Plan`, `X-Clockify-Workspace-Id`.
 
 The Worker never logs the API key. `GET /` returns discovery JSON (use `Accept: application/json`).
 
@@ -44,7 +44,30 @@ The Worker never logs the API key. `GET /` returns discovery JSON (use `Accept: 
 
 `stop_running_timer` is **full-only**, matching the Python server.
 
-## Wave 1 tools (32)
+### Workspace plan (`DEFAULT_PLAN` / `X-Clockify-Plan`)
+
+Wave 1 tools work on **Clockify Free**. When paid domains land in Wave 2+, each tool declares a `minPlan` (`free` | `standard` | `pro`). The worker filters the tool list so Free workspaces never see tools that will only fail.
+
+| Value | Effect |
+|-------|--------|
+| `free` (wrangler default) | Only tools with `minPlan: free` |
+| `standard` | Free + Standard tools |
+| `pro` | Free + Standard + Pro tools |
+| `all` | No plan filter |
+
+Set via `DEFAULT_PLAN` in `wrangler.toml`, or override per request with `X-Clockify-Plan` / OAuth consent `plan` field.
+
+### Error categories
+
+API failures are classified so the assistant can explain without retrying blindly:
+
+| Category | When | What to tell the user |
+|----------|------|------------------------|
+| `PLAN_REQUIRED` | HTTP 402, or a "subscription" message | Upgrade the workspace plan (Standard/Pro) |
+| `ACCESS_DENIED` | HTTP 403 | Enable the module in Workspace Settings, or check the API key user's role |
+| `AUTH` | HTTP 401 | Fix / rotate the Clockify API key |
+
+## Wave 1 tools (32+)
 
 See [WAVES.md](./WAVES.md).
 

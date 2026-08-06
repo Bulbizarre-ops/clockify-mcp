@@ -12,6 +12,7 @@ describe("extractClockifyCredentials", () => {
       apiKey: "secret-key",
       accessMode: "read",
       region: "global",
+      plan: "all",
       workspaceId: undefined,
     });
   });
@@ -38,6 +39,7 @@ describe("extractClockifyCredentials", () => {
         Authorization: "Bearer k",
         "X-Clockify-Access-Mode": "time-tracking",
         "X-Clockify-Region": "euw2",
+        "X-Clockify-Plan": "standard",
         "X-Clockify-Workspace-Id": "ws-123",
       }),
     );
@@ -45,16 +47,19 @@ describe("extractClockifyCredentials", () => {
       apiKey: "k",
       accessMode: "time-tracking",
       region: "euw2",
+      plan: "standard",
       workspaceId: "ws-123",
     });
   });
 
-  it("applies defaults from options when headers omit mode/region", () => {
+  it("applies defaults from options when headers omit mode/region/plan", () => {
     const creds = extractClockifyCredentials(req({ "X-Api-Key": "k" }), {
       defaultAccessMode: "full",
       defaultRegion: "apse2",
+      defaultPlan: "free",
     });
     expect(creds?.accessMode).toBe("full");
     expect(creds?.region).toBe("apse2");
+    expect(creds?.plan).toBe("free");
   });
 });

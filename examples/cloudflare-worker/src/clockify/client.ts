@@ -1,3 +1,7 @@
+import {
+  classifyError,
+  type ErrorCategory,
+} from "./errors.js";
 import { resolveHosts, type ClockifyRegion } from "./regions.js";
 
 export type ClockifyClientOptions = {
@@ -10,12 +14,17 @@ export type ClockifyClientOptions = {
 export class ClockifyAPIError extends Error {
   readonly statusCode: number;
   readonly body: unknown;
+  readonly category: ErrorCategory | null;
+  readonly hint: string | null;
 
   constructor(statusCode: number, message: string, body: unknown = null) {
     super(`Clockify API error ${statusCode}: ${message}`);
     this.name = "ClockifyAPIError";
     this.statusCode = statusCode;
     this.body = body;
+    const [category, hint] = classifyError(statusCode, message);
+    this.category = category;
+    this.hint = hint;
   }
 }
 

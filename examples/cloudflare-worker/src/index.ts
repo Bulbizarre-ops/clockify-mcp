@@ -1,6 +1,7 @@
 import type { OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import { OAuthProvider } from "@cloudflare/workers-oauth-provider";
 import { parseAccessMode } from "./clockify/access-mode.js";
+import { parseClockifyPlan } from "./clockify/plan.js";
 import { parseRegion } from "./clockify/regions.js";
 import type { Env } from "./env.js";
 import { mcpApiHandler } from "./mcp-api.js";
@@ -32,6 +33,9 @@ async function resolveExternalToken({
     ),
     region: parseRegion(
       request.headers.get("X-Clockify-Region") ?? env.DEFAULT_REGION,
+    ),
+    plan: parseClockifyPlan(
+      request.headers.get("X-Clockify-Plan") ?? env.DEFAULT_PLAN,
     ),
     workspaceId:
       request.headers.get("X-Clockify-Workspace-Id")?.trim() || undefined,

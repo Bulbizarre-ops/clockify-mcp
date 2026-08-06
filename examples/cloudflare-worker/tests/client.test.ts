@@ -46,7 +46,39 @@ describe("ClockifyClient", () => {
     );
     const client = new ClockifyClient({ apiKey: "bad", region: "global" });
     await expect(client.get("user")).rejects.toBeInstanceOf(ClockifyAPIError);
-    await expect(client.get("user")).rejects.toMatchObject({ statusCode: 401 });
+    await expect(client.get("user")).rejects.toMatchObject({
+      statusCode: 401,
+      category: "AUTH",
+    });
+  });
+
+  it("classifies 403 as ACCESS_DENIED", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({ message: "Access Denied" }, { status: 403 }),
+      ),
+    );
+    const client = new ClockifyClient({ apiKey: "k", region: "global" });
+    await expect(client.get("user")).rejects.toMatchObject({
+      statusCode: 403,
+      category: "ACCESS_DENIED",
+      hint: expect.stringContaining("Workspace Settings"),
+    });
+  });
+
+  it("classifies subscription messages as PLAN_REQUIRED", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({ message: "No active subscription" }, { status: 400 }),
+      ),
+    );
+    const client = new ClockifyClient({ apiKey: "k", region: "global" });
+    await expect(client.get("user")).rejects.toMatchObject({
+      category: "PLAN_REQUIRED",
+      hint: expect.stringContaining("plan"),
+    });
   });
 
   it("calls globalThis.fetch through a wrapper instead of an unbound reference", async () => {
