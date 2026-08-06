@@ -48,6 +48,12 @@ The Worker never logs the API key. `GET /` returns discovery JSON (use `Accept: 
 
 See [WAVES.md](./WAVES.md).
 
+## Local tools (not MCP)
+
+Standalone CLIs that call Clockify directly from your machine — see [scripts/README.md](./scripts/README.md).
+
+Notably: `scripts/backup_time_entries.py` migrates completed time entries between workspaces (same semantics as MCP `backup_time_entries`, better for bulk runs).
+
 ## Architecture
 
 ```

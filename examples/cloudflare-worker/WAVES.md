@@ -28,7 +28,9 @@ Companion to the Python server’s phased coverage. Tool **names** and **access 
 
 ### Shipped
 
-`backup_time_entries` (**full** mode) — copy completed time entries from a source workspace into a dedicated destination workspace. Projects/tags are matched by name (created on destination if missing). Running timers are skipped. Supports `dry_run`, optional `start`/`end` filters, optional `user_id` (defaults to authenticated user).
+`backup_time_entries` (**full** mode) — copy completed time entries from a source workspace into a dedicated destination workspace. Pass `destination_workspace_id` **or** `destination_workspace_name` (reuse by name, or `POST /workspaces` to create — requires Cake `organizationId`, taken from source `cakeOrganizationId` or optional `organization_id`). Projects/tags are matched by name (created on destination if missing). Running timers are skipped. **Idempotent by default**: embeds `[clk-backup:<sourceId>]` and skips already-present entries (marker or content fingerprint); `force=true` bypasses. Supports `dry_run`, optional `start`/`end` filters, optional `user_id` (defaults to authenticated user).
+
+**Local CLI (not MCP):** for bulk migrations from a laptop, use [`scripts/backup_time_entries.py`](./scripts/backup_time_entries.py) — same semantics, documented in [`scripts/README.md`](./scripts/README.md).
 
 ### Planned
 
